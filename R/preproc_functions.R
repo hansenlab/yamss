@@ -26,8 +26,10 @@ setClass("cms",
 ## 8. Quantify
 ## 9. Differential analysis
 
-readRawDataAsDataTable <- function(obj, files) {
-    message(sprintf("[readRawDataAsDataTable]: Reading %i files", length(files)))
+readRawDataAsDataTable <- function(obj, files, verbose = FALSE) {
+    if(verbose) {
+        message(sprintf("[readRawDataAsDataTable]: Reading %i files", length(files)))
+    }
     obj@rawpeakinfo <- getPeakInfo(files)
     ## Make raw data matrix and data.table
     rawdatamat <- do.call(rbind, lapply(seq_along(obj@rawpeakinfo), function(s) {
@@ -48,13 +50,15 @@ readRawDataAsDataTable <- function(obj, files) {
     list(obj = obj, DT = DT)
 }
 
-backgroundCorrection <- function(obj, DT) {
+backgroundCorrection <- function(obj, DT, verbose = FALSE) {
     mzParams <- obj@mzParams
     setkey(DT, mz, scan, sample)
     mzbreaks <- c(seq(mzParams$minMZ, mzParams$maxMZ, 10), mzParams$maxMZ)
     scanbreaks <- seq(1, mzParams$maxScan, 40)
     scanbreaks[length(scanbreaks)] <- mzParams$maxScan
-    message("[backgroundCorrection] get marginal intensities")
+    if(verbose) {
+        message("[backgroundCorrection] get marginal intensities")
+    }
     ptime1 <- proc.time()
     densGrid <- lapply(1:(length(mzbreaks)-1), function(m) {
         mzseq <- seq(as.integer(mzbreaks[m]*1e5), as.integer(mzbreaks[m+1]*1e5))
@@ -71,8 +75,9 @@ backgroundCorrection <- function(obj, DT) {
     })
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
-    message(sprintf("[backgroundCorrection]   .. done in %.1f secs.", stime))
-    
+    if(verbose) {
+        message(sprintf("[backgroundCorrection]   .. done in %.1f secs.", stime))
+    }
     ## Estimate retention time window-specific background levels
     bgsd <- 0 # SD of normal distribution characterizing noise intensities
     r <- dnorm(bgsd)/dnorm(0)
@@ -90,7 +95,9 @@ backgroundCorrection <- function(obj, DT) {
             })
         })
     })
-    message("[backgroundCorrection] get region-specific background trends")
+    if(verbose) {
+        message("[backgroundCorrection] get region-specific background trends")
+    }
     ptime1 <- proc.time()
     smooths <- lapply(seq_along(obj@files), function(s) {
         ## rows = scans, cols = M/Z bins
@@ -117,7 +124,9 @@ backgroundCorrection <- function(obj, DT) {
     })
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
-    message(sprintf("[backgroundCorrection]  .. done in %.1f secs.", stime))
+    if(verbose) {
+        message(sprintf("[backgroundCorrection]  .. done in %.1f secs.", stime))
+    }
     if (FALSE) {
         smooths <- lapply(seq_along(obj@files), function(s) {
             bgmeanmatThisSample <- do.call(cbind, lapply(bgmeans, function(mzList) {
@@ -134,7 +143,9 @@ backgroundCorrection <- function(obj, DT) {
 
     ## Perform background correction
     setkey(DT, mz, sample)
-    message("[backgroundCorrection] correct intensities")
+    if(verbose) {
+        message("[backgroundCorrection] correct intensities")
+    }
     ptime1 <- proc.time()
     DTbgcorr <- rbindlist(lapply(seq_along(obj@files), function(s) {
         bgmeanmatSmoothed <- smooths[[s]]
@@ -151,7 +162,9 @@ backgroundCorrection <- function(obj, DT) {
     DTbgcorr <- DTbgcorr[intensity > 0]
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
-    message(sprintf("[backgroundCorrection]  .. done in %.1f secs.", stime))
+    if(verbose) {
+        message(sprintf("[backgroundCorrection]  .. done in %.1f secs.", stime))
+    }
     if (FALSE) {
         setkey(DT, sample)
         DTbgcorr <- rbindlist(lapply(seq_along(obj@files), function(s) {
@@ -161,10 +174,12 @@ backgroundCorrection <- function(obj, DT) {
     return(list(obj = obj, DTbgcorr = DTbgcorr))
 }
 
-rtAlignment <- function(obj, rtwarp = NULL, DT, DTbgcorr) {
+rtAlignment <- function(obj, rtwarp = NULL, DT, DTbgcorr, verbose = FALSE) {
     mzParams <- obj@mzParams
     if (is.null(rtwarp)) {
-        message("[rtAlignment] Get rough M/Z regions to align")
+        if(verbose) {
+            message("[rtAlignment] Get rough M/Z regions to align")
+        }
         ## Get density of M/Z values
         ## This density will be thresholded to yield M/Z regions
         mzdens <- density(DTbgcorr[,mz]/1e5, weights = DTbgcorr[,intensity]/sum(DTbgcorr[,intensity]), n = 2^ceiling(log2(nrow(DTbgcorr))), bw = 0.005)
@@ -183,8 +198,9 @@ rtAlignment <- function(obj, rtwarp = NULL, DT, DTbgcorr) {
         ## i.e. We want the lowest cutoff such that the wide M/Z widths are not too wide
         wh <- which.max(p90 < 0.05)
         irmzr <- IRanges(start = as.integer(mzbounds[[wh]][,1]*1e5), end = as.integer(mzbounds[[wh]][,2]*1e5))
-
-        message("[rtAlignment] Get XICs for these regions")
+        if(verbose) {
+            message("[rtAlignment] Get XICs for these regions")
+        }
         ptime1 <- proc.time()
         xics <- getAllXics(mzranges = irmzr, DT = DT)
         scans <- 1:obj@mzParams$maxScan
@@ -198,9 +214,10 @@ rtAlignment <- function(obj, rtwarp = NULL, DT, DTbgcorr) {
         })
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
-        message(sprintf("[rtAlignment]  .. done in %.1f secs.", stime))
-
-        message("[rtAlignment] Find best shifts")
+        if(verbose) {
+            message(sprintf("[rtAlignment]  .. done in %.1f secs.", stime))
+            message("[rtAlignment] Find best shifts")
+        }
         ptime1 <- proc.time()
         shifts <- -20:20
         DTbgcorr[, scanorig := scan]
@@ -235,9 +252,10 @@ rtAlignment <- function(obj, rtwarp = NULL, DT, DTbgcorr) {
         })
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
-        message(sprintf("[rtAlignment]  .. done in %.1f secs.", stime))
-        
-        message("[rtAlignment] Remap scans")
+        if(verbose) {
+            message(sprintf("[rtAlignment]  .. done in %.1f secs.", stime))
+            message("[rtAlignment] Remap scans")
+        }
         ptime1 <- proc.time()
         setkey(DTbgcorr, mz, sample)
         setkey(DT, mz, sample)
@@ -258,10 +276,14 @@ rtAlignment <- function(obj, rtwarp = NULL, DT, DTbgcorr) {
         DTbgcorr <- DTbgcorr[scan >= 1 & scan <= obj@mzParams$maxScan]
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
-        message(sprintf(".. done in %.1f secs.", stime))
+        if(verbose) {
+            message(sprintf(".. done in %.1f secs.", stime))
+        }
     } else {
         obj@alignments <- rtwarp
-        message("[rtAlignment] Remap scans")
+        if(verbose) {
+            message("[rtAlignment] Remap scans")
+        }
         DTbgcorr[, scanorig := scan]
         DT[, scanorig := scan]
         for (i in seq_along(obj@files)) {
@@ -275,8 +297,10 @@ rtAlignment <- function(obj, rtwarp = NULL, DT, DTbgcorr) {
     list(obj = obj, DT = DT, DTbgcorr = DTbgcorr)
 }
 
-densityEstimation <- function(obj, DTbgcorr, dgridstep = dgridstep, dbandwidth = dbandwidth, outfileDens) {
-    getDensityEstimateApprox <- function(DTbgcorr, bw = dbandwidth, gridstep = dgridstep, maxbws = 4, mzParams) {
+densityEstimation <- function(obj, DTbgcorr, dgridstep = dgridstep,
+                              dbandwidth = dbandwidth, outfileDens, verbose = FALSE) {
+    getDensityEstimateApprox <- function(DTbgcorr, bw = dbandwidth,
+                                         gridstep = dgridstep, maxbws = 4, mzParams) {
         gridseqMz <- seq(mzParams$minMZ, mzParams$maxMZ, gridstep[1])
         gridseqScan <- seq(1, mzParams$maxScan, gridstep[2])
         ## Assign each point to a grid location
@@ -287,7 +311,9 @@ densityEstimation <- function(obj, DTbgcorr, dgridstep = dgridstep, dbandwidth =
         ## Sort by M/Z grid location than scan grid location
         setkey(DTbgcorr, gmz, gscan)
         tabgmz <- table(factor(DTbgcorr[,gmz], levels = 1:length(gridseqMz)))
-        message("[getDensityEstimateApprox] Getting sparse matrix entries (M/Z)")
+        if(verbose) {
+            message("[getDensityEstimateApprox] Getting sparse matrix entries (M/Z)")
+        }
         ptime1 <- proc.time()
         spdensmz <- lapply(seq_along(gridseqMz), function(i) {
             whg <- max(i - ng[1], 1):min(i + ng[1], length(gridseqMz))
@@ -305,9 +331,10 @@ densityEstimation <- function(obj, DTbgcorr, dgridstep = dgridstep, dbandwidth =
         })
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
-        message(sprintf("[getDensityEstimateApprox]  .. done in %.1f secs.", stime))
-
-        message("[getDensityEstimateApprox] Constructing sparse matrix (M/Z)")
+        if(verbose) {
+            message(sprintf("[getDensityEstimateApprox]  .. done in %.1f secs.", stime))
+            message("[getDensityEstimateApprox] Constructing sparse matrix (M/Z)")
+        }
         ptime1 <- proc.time()
         spmatmz <- sparseMatrix(
             i = do.call(c, lapply(seq_along(spdensmz), function(i) {
@@ -321,10 +348,13 @@ densityEstimation <- function(obj, DTbgcorr, dgridstep = dgridstep, dbandwidth =
         )
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
-        message(sprintf("[getDensityEstimateApprox]  .. done in %.1f secs.", stime))
+        if(verbose) {
+            message(sprintf("[getDensityEstimateApprox]  .. done in %.1f secs.", stime))
+        }
         rm(spdensmz)
-        
-        message("[getDensityEstimateApprox] Getting sparse matrix entries (scan) + computing density")
+        if(verbose) {
+            message("[getDensityEstimateApprox] Getting sparse matrix entries (scan) + computing density")
+        }
         gscan <- DTbgcorr[,gscan]
         intens <- DTbgcorr[,intensity]
         intens <- intens - min(intens)
@@ -345,15 +375,21 @@ densityEstimation <- function(obj, DTbgcorr, dgridstep = dgridstep, dbandwidth =
         })
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
-        message(sprintf("[getDensityEstimateApprox]  .. done in %.1f secs.", stime))
+        if(verbose) {
+            message(sprintf("[getDensityEstimateApprox]  .. done in %.1f secs.", stime))
+        }
         return(dens)
     }
 
-    message("[densityEstimation] Get density estimate")
+    if(verbose) {
+        message("[densityEstimation] Get density estimate")
+    }
     ## First check to see if the density has been pre-computed
     if (!is.null(outfileDens)) {
         if (file.exists(outfileDens)) {
-            message("[getDensityEstimateApprox]  .. loading")
+            if(verbose) {
+                message("[getDensityEstimateApprox]  .. loading")
+            }
             load(outfileDens)
         } else {
             ptime1 <- proc.time()
@@ -361,8 +397,10 @@ densityEstimation <- function(obj, DTbgcorr, dgridstep = dgridstep, dbandwidth =
                                                  gridstep = dgridstep, maxbws = 4, mzParams = obj@mzParams)
             ptime2 <- proc.time()
             stime <- (ptime2 - ptime1)[3]
-            message(sprintf("[densityEstimation] estimation .. done in %.1f secs.", stime))
-            message("[densityEstimation] Saving density estimate")
+            if(verbose) {
+                message(sprintf("[densityEstimation] estimation .. done in %.1f secs.", stime))
+                message("[densityEstimation] Saving density estimate")
+            }
             save(densList, file = outfileDens)
         }
     } else {
@@ -371,23 +409,30 @@ densityEstimation <- function(obj, DTbgcorr, dgridstep = dgridstep, dbandwidth =
                                              gridstep = dgridstep, maxbws = 4, mzParams = obj@mzParams)
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
-        message(sprintf("[densityEstimation] estimation .. done in %.1f secs.", stime))
+        if(verbose) {
+            message(sprintf("[densityEstimation] estimation .. done in %.1f secs.", stime))
+        }
     }
     
-    message("[densityEstimation] Make density matrix")
+    if(verbose) {
+        message("[densityEstimation] Make density matrix")
+    }
     ptime1 <- proc.time()
     dmat <- do.call(cbind, lapply(densList, as.matrix))
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
-    message(sprintf("[densityEstimation] .. done in %.1f secs.", stime))
-    
+    if(verbose) {
+        message(sprintf("[densityEstimation] .. done in %.1f secs.", stime))
+    }
     rm(densList)
     rownames(dmat) <- seq(obj@mzParams$minMZ, obj@mzParams$maxMZ, length.out = nrow(dmat))
     return(list(dmat = dmat))
 }
 
-getCutoff <- function(obj, densmat, by = 2, DTbgcorr) {
-    message("[getDensityCutoff] Get density cutoff")
+getCutoff <- function(obj, densmat, by = 2, DTbgcorr, verbose = FALSE) {
+    if(verbose) {
+        message("[getDensityCutoff] Get density cutoff")
+    }
     ptime1 <- proc.time()
     mzParams <- obj@mzParams
     mzregions <- seq(mzParams$minMZ, mzParams$maxMZ, by)
@@ -449,12 +494,16 @@ getCutoff <- function(obj, densmat, by = 2, DTbgcorr) {
 
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
-    message(sprintf("[getDensityCutoff]  .. done in %.1f secs.", stime))
+    if(verbose) {
+        message(sprintf("[getDensityCutoff]  .. done in %.1f secs.", stime))
+    }
     return(cutoff)
 }
 
-getBlobs <- function(densmat, dcutoff) {
-    message("[getBlobs] Getting blobs")
+getBlobs <- function(densmat, dcutoff, verbose = FALSE) {
+    if(verbose) {
+        message("[getBlobs] Getting blobs")
+    }
     ptime1 <- proc.time()
     bool <- densmat > dcutoff
     mzs <- as.numeric(rownames(densmat))
@@ -469,12 +518,16 @@ getBlobs <- function(densmat, dcutoff) {
     colnames(blobs) <- c("mzmin", "mzmax", "scan.min", "scan.max", "blobnum")
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
-    message(sprintf("[getBlobs]  .. done in %.1f secs.", stime))
+    if(verbose) {
+        message(sprintf("[getBlobs]  .. done in %.1f secs.", stime))
+    }
     return(blobs)
 }
 
-getXICsAndQuantifyWithRetentionTime <- function(obj, DT) {
-    message("[getXICsAndQuantifyWithRetentionTime] compute XICs")
+getXICsAndQuantifyWithRetentionTime <- function(obj, DT, verbose = FALSE) {
+    if(verbose) {
+        message("[getXICsAndQuantifyWithRetentionTime] compute XICs")
+    }
     mzParams <- obj@mzParams
     setkey(DT, mz, scan)
     ptime1 <- proc.time()
@@ -496,9 +549,10 @@ getXICsAndQuantifyWithRetentionTime <- function(obj, DT) {
     })
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
-    message(sprintf(".. done in %.1f secs.", stime))
-    
-    message("[getXICsAndQuantifyWithRetentionTime] quantify")
+    if(verbose) {
+        message(sprintf(".. done in %.1f secs.", stime))
+        message("[getXICsAndQuantifyWithRetentionTime] quantify")
+    }
     scanstep <- 0.01
     scanseq <- seq(0, mzParams$maxScan, scanstep)
     ptime1 <- proc.time()
@@ -511,23 +565,31 @@ getXICsAndQuantifyWithRetentionTime <- function(obj, DT) {
                                }))
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
-    message(sprintf("[getXICsAndQuantifyWithRetentionTime]  .. done in %.1f secs.", stime))
+    if(verbose) {
+        message(sprintf("[getXICsAndQuantifyWithRetentionTime]  .. done in %.1f secs.", stime))
+    }
     obj@quants <- quantmat
     obj
 }
 
-getXICsAndQuantifyWithoutRetentionTime <- function(obj, DT) {
-    message("[getXICsAndQuantifyWithoutRetentionTime] compute XICs")
+getXICsAndQuantifyWithoutRetentionTime <- function(obj, DT, verbose = FALSE) {
+    if(verbose) {
+        message("[getXICsAndQuantifyWithoutRetentionTime] compute XICs")
+    }
     mzParams <- obj@mzParams
     ptime1 <- proc.time()
     obj@xicsRaw <- getAllXics(mzranges = IRanges(start = as.integer(obj@blobs[,"mzmin"]*1e5),
                                                  end = as.integer(obj@blobs[,"mzmax"]*1e5)), DT = DT)
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
-    message(sprintf(".. done in %.1f secs.", stime))
+    if(verbose) {
+        message(sprintf(".. done in %.1f secs.", stime))
+    }
     scans <- 1:mzParams$maxScan
 
-    message("[getXICsAndQuantifyWithoutRetentionTime] Impute")
+    if(verbose) {
+        message("[getXICsAndQuantifyWithoutRetentionTime] Impute")
+    }
     ptime1 <- proc.time()
     obj@xicsImputed <- lapply(obj@xicsRaw, function(x) {
         do.call(cbind, lapply(1:ncol(x), function(col) {
@@ -539,9 +601,13 @@ getXICsAndQuantifyWithoutRetentionTime <- function(obj, DT) {
     })
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
-    message(sprintf("[getXICsAndQuantifyWithoutRetentionTime]  .. done in %.1f secs.", stime))
+    if(verbose) {
+        message(sprintf("[getXICsAndQuantifyWithoutRetentionTime]  .. done in %.1f secs.", stime))
+    }
     
-    message("[getXICsAndQuantifyWithoutRetentionTime] quantify")
+    if(verbose) {
+        message("[getXICsAndQuantifyWithoutRetentionTime] quantify")
+    }
     quantmat <- do.call(rbind, lapply(seq_along(obj@xicsImputed), function(i) {
                                    mat <- obj@xicsImputed[[i]][obj@blobs[i, "scan.min"]:min(c(obj@blobs[i, "scan.max"], mzParams$maxScan)),,drop = FALSE]
                                    mat <- (2^mat)-1
@@ -571,6 +637,7 @@ getXICsAndQuantifyWithoutRetentionTime <- function(obj, DT) {
 #'   no output is saved.
 #' @param dortalign A logical value. Should retention time correction be
 #'   performed?
+#' @param verbose Should the function be verbose?
 #' 
 #' @examples
 #' \dontrun{
@@ -583,15 +650,23 @@ getXICsAndQuantifyWithoutRetentionTime <- function(obj, DT) {
 #' cmsobj <- bakedpi(files = files, classes = classes, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1), outfileDens = NULL, dortalign = TRUE)
 #' }
 #' }
-bakedpi <- function(files, classes, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1), outfileDens = NULL, dortalign = FALSE) {
+bakedpi <- function(files, classes, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1),
+                    outfileDens = NULL, dortalign = FALSE, verbose = TRUE) {
+    subverbose <- max(as.integer(verbose) - 1L, 0)
     obj <- new("cms") # these are the results
     obj@files <- files
     obj@classes <- classes
     ## Parse raw data
+    if(verbose) {
+        message("[bakedpi] Reading data")
+    }
     out <- readRawDataAsDataTable(obj = obj, files = files)
     obj <- out$obj
     DT <- out$DT
 
+    if(verbose) {
+        message("[bakedpi] Background correction")
+    }
     out <- backgroundCorrection(obj = obj, DT = DT)
     obj <- out$obj
     DTbgcorr <- out$DTbgcorr
@@ -603,18 +678,31 @@ bakedpi <- function(files, classes, dbandwidth = c(0.005, 10), dgridstep = c(0.0
         DT <- out$DT
         DTbgcorr <- out$DTbgcorr
     }
+
+    if(verbose) {
+        message("[bakedpi] Density estimation")
+    }
     dmat <- densityEstimation(obj = obj, DTbgcorr = DTbgcorr, dbandwidth = dbandwidth,
                               dgridstep = dgridstep, outfileDens = outfileDens)$dmat
+    if(verbose) {
+        message("[bakedpi] Computing cutoff")
+    }
     cutoff <- getCutoff(obj = obj, densmat = dmat, by = 2, DTbgcorr = DTbgcorr)
     qs <- seq(0,1,0.001)
     obj@densquants <- quantile(dmat[dmat!=0], qs)
     qcutoff <- which.min(abs(cutoff-obj@densquants))
     qref <- which.min(abs(qs-0.99))
     obj@dcutoff <- max(cutoff, obj@densquants[qref])
+    if(verbose) {
+        message("[bakedpi] Getting blobs")
+    }
     obj@blobs <- getBlobs(densmat = dmat, dcutoff = obj@dcutoff)
     rm(dmat)
 
     ## Get XICs and quantifications - methods differ if RT alignment was performed
+    if(verbose) {
+        message("[bakedpi] Quantifying")
+    }
     if (dortalign) {
         obj <- getXICsAndQuantifyWithRetentionTime(obj = obj, DT = DT)
     } else {
