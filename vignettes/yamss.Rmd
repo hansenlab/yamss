@@ -1,0 +1,40 @@
+---
+title: "The yamss User's Guide"
+author: "Leslie Myint"
+date: "`r doc_date()`"
+package: "`r pkg_ver('yamss')`"
+bibliography: yamss.bib
+abstract: >
+  A comprehensive guide to using the yamss package for analyzing
+  high-throughput metabolomics data
+vignette: >
+  %\VignetteIndexEntry{yamss User's Guide}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output: 
+  BiocStyle::pdf_document:
+    keep_tex: true
+    number_sections: false
+---
+
+# Introduction
+
+Something. Citing XCMS [@xcms]
+
+## Dependencies
+
+This document has the following dependencies
+
+```{r dependencies, warning=FALSE, message=FALSE}
+library(yamss)
+```
+
+# Sessioninfo
+
+```{r sessionInfo, results='asis', echo=FALSE}
+toLatex(sessionInfo())
+```
+
+# References
+
+
