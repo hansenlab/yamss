@@ -30,5 +30,5 @@ importFrom(plyr, ".", round_any)
 
 ## Export
 
-export(getPeakInfo, getTIC, getAllXics, getDiffTable, bakedpi)
+export(getPeakInfo, getTIC, getAllXics, getDiffTable, bakedpi, readRawDataAsDataTable)
 exportClass("cms")
