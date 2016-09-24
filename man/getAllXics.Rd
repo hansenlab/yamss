@@ -28,7 +28,7 @@ extracted ion chromatogram.
 if (require(mtbls2)) {
 data(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")
-files <- list.files(filepath, recursive = TRUE, full.names = TRUE)
+files <- list.files(filepath, recursive = TRUE, full.names = TRUE)[1:2]
 obj <- new("cms", files = files)
 ## Parse raw data
 out <- readRawDataAsDataTable(obj = obj, files = files)
