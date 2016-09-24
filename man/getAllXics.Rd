@@ -29,8 +29,7 @@ if (require(mtbls2)) {
 data(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")
 files <- list.files(filepath, recursive = TRUE, full.names = TRUE)
-obj <- new("cms")
-obj@files <- files
+obj <- new("cms", files = files)
 ## Parse raw data
 out <- readRawDataAsDataTable(obj = obj, files = files)
 obj <- out$obj
