@@ -5,8 +5,8 @@ Description: Tools to analyze and visualize high-throughput metabolomics data
     aquired using chromatography-mass spectrometry. These tools preprocess
     data in a way that enables reliable and powerful differential analysis.
 Authors@R: c(
-	  person("Leslie", "Myint", role = c("cre", "aut"), email = "lmyint1@jhu.edu"),
-	  person(c("Kasper", "Daniel"), "Hansen", role = "aut"))
+      person("Leslie", "Myint", role = c("cre", "aut"), email = "lmyint1@jhu.edu"),
+      person(c("Kasper", "Daniel"), "Hansen", role = "aut"))
 Depends:
     methods,
     BiocGenerics (>= 0.15.3),
