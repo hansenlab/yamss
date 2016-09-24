@@ -600,39 +600,6 @@ getXICsAndQuantifyWithoutRetentionTime <- function(obj, DT, verbose = FALSE) {
     obj
 }
 
-#' Process raw data to obtain quantifications.
-#' 
-#' Performs background correction, retention time correction, peak detection,
-#' and differential analysis.
-#' 
-#' \code{bakedpi} first performs region-specific background correction. An
-#' optional retention time correction step follows in which M/Z region-specific
-#' shifts are computed to align the raw data. Next the two-dimensional density
-#' estimate is computed. A cutoff is determined to call peaks which are then
-#' quantified and run through a differential analysis pipeline.
-#' 
-#' @param files A character vector of raw data filenames
-#' @param classes A character vector of class labels for the samples
-#' @param dbandwidth A length-2 vector indicating the kernel density bandwidth
-#'   in the M/Z and retention time (scan) directions. Default: \code{c(0.05,10)}
-#' @param dgridstep A length-2 vector indicating the grid step sizes
-#' @param outfileDens Name of a file to save density estimate. If NULL,
-#'   no output is saved.
-#' @param dortalign A logical value. Should retention time correction be
-#'   performed?
-#' @param verbose Should the function be verbose?
-#' 
-#' @examples
-#' \dontrun{
-#' if (require(mtbls2) & require(yamss)) {
-#' data(mtbls2)
-#' filepath <- file.path(find.package("mtbls2"), "mzData")
-#' files <- list.files(filepath, recursive = TRUE, full.names = TRUE)
-#' files <- files[c(1,2,5,6)]
-#' classes <- rep(c("wild-type", "mutant"), each = 2)
-#' cmsobj <- bakedpi(files = files, classes = classes, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1), outfileDens = NULL, dortalign = TRUE)
-#' }
-#' }
 bakedpi <- function(files, classes, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1),
                     outfileDens = NULL, dortalign = FALSE, verbose = TRUE) {
     subverbose <- max(as.integer(verbose) - 1L, 0)
