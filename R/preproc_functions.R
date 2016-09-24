@@ -127,18 +127,6 @@ backgroundCorrection <- function(obj, DT, verbose = FALSE) {
     if(verbose) {
         message(sprintf("[backgroundCorrection]  .. done in %.1f secs.", stime))
     }
-    if (FALSE) {
-        smooths <- lapply(seq_along(obj@files), function(s) {
-            bgmeanmatThisSample <- do.call(cbind, lapply(bgmeans, function(mzList) {
-                                                      sapply(mzList, function(scanList) { scanList[[s]] }) # vector with entry for each scan
-                                                  }))
-            bgmeanmatThisSample[is.infinite(bgmeanmatThisSample)] <- NA
-            keepCols <- which(colSums(!is.na(bgmeanmatThisSample)) != 0)
-            bgmeanmatThisSample <- bgmeanmatThisSample[,keepCols]
-            lo <- lowess(rep(head(scanbreaks, -1), times = ncol(bgmeanmatThisSample)), as.numeric(bgmeanmatThisSample), f = 0.05)
-            approx(lo, xout = 1:mzParams$maxScan, rule = 2)$y
-        })
-    }
     obj@bgsmooths <- smooths
 
     ## Perform background correction
@@ -164,12 +152,6 @@ backgroundCorrection <- function(obj, DT, verbose = FALSE) {
     stime <- (ptime2 - ptime1)[3]
     if(verbose) {
         message(sprintf("[backgroundCorrection]  .. done in %.1f secs.", stime))
-    }
-    if (FALSE) {
-        setkey(DT, sample)
-        DTbgcorr <- rbindlist(lapply(seq_along(obj@files), function(s) {
-            DT[.(s)][,intensity := intensity - ((2^smooths[[s]][scan])-1)][intensity > 0]
-        }))
     }
     return(list(obj = obj, DTbgcorr = DTbgcorr))
 }
@@ -256,6 +238,7 @@ rtAlignment <- function(obj, rtwarp = NULL, DT, DTbgcorr, verbose = FALSE) {
             message(sprintf("[rtAlignment]  .. done in %.1f secs.", stime))
             message("[rtAlignment] Remap scans")
         }
+        obj@alignments <- shiftsList
         ptime1 <- proc.time()
         setkey(DTbgcorr, mz, sample)
         setkey(DT, mz, sample)
@@ -684,6 +667,8 @@ bakedpi <- function(files, classes, dbandwidth = c(0.005, 10), dgridstep = c(0.0
     }
     dmat <- densityEstimation(obj = obj, DTbgcorr = DTbgcorr, dbandwidth = dbandwidth,
                               dgridstep = dgridstep, outfileDens = outfileDens)$dmat
+    obj@dens <- dmat
+
     if(verbose) {
         message("[bakedpi] Computing cutoff")
     }
@@ -697,7 +682,6 @@ bakedpi <- function(files, classes, dbandwidth = c(0.005, 10), dgridstep = c(0.0
         message("[bakedpi] Getting blobs")
     }
     obj@blobs <- getBlobs(densmat = dmat, dcutoff = obj@dcutoff)
-    rm(dmat)
 
     ## Get XICs and quantifications - methods differ if RT alignment was performed
     if(verbose) {
