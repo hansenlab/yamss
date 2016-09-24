@@ -23,6 +23,9 @@ performed?}
 
 \item{verbose}{Should the function be verbose?}
 }
+\value{
+An object of class "cms" containing preprocessing information.
+}
 \description{
 Performs background correction, retention time correction, peak detection,
 and differential analysis.
