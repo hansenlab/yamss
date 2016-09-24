@@ -1,30 +1,34 @@
-Package: yamss
-Version: 0.0.1
-Title: Tools for high-throughput metabolomics
-Description: Tools to analyze and visualize high-throughput metabolomics data
-    aquired using chromatography-mass spectrometry. These tools preprocess
-    data in a way that enables reliable and powerful differential analysis.
-Authors@R: c(
-	  person("Leslie", "Myint", role = c("cre", "aut"), email = "lmyint1@jhu.edu"),
-	  person(c("Kasper", "Daniel"), "Hansen", role = "aut"))
-Depends:
-    methods,
-    BiocGenerics (>= 0.15.3),
-    ProtGenerics,
-    limma
-Suggests:
-    knitr,
-    rmarkdown
-Imports:
-    IRanges,
-    stats,
-    S4Vectors,
-    EBImage,
-    Matrix,
-    data.table,
-    mzR,
-    plyr
-VignetteBuilder: knitr
-License: Artistic-2.0
-biocViews: MassSpectrometry, Metabolomics, Software
-RoxygenNote: 5.0.1
+import(methods)
+import(BiocGenerics)
+importFrom(ProtGenerics, intensity, mz)
+importMethodsFrom(S4Vectors, colSums, complete.cases, head, tail)
+
+## Mass spec stuff
+importFrom(mzR, openMSfile)
+importMethodsFrom(mzR, peaks, header, close)
+
+## "Base" packages
+
+importFrom(Matrix, sparseMatrix)
+importMethodsFrom(Matrix, crossprod)
+importFrom(stats, approx, approxfun, dnorm, loess,
+           model.matrix, predict)
+
+## Other packages
+importFrom(S4Vectors, queryHits, subjectHits)
+importMethodsFrom(S4Vectors, colMeans, colSums, do.call, head,
+                  is.unsorted, rowMeans, rowSums, sapply, sort, t,
+                  tail)
+importFrom(IRanges, IRanges, whichAsIRanges)
+importMethodsFrom(IRanges, as.matrix, cor, diff, ifelse,
+                  quantile, shift)
+
+importFrom(data.table, ":=", ".N", CJ, data.table, rbindlist, setkey)
+importFrom(EBImage, bwlabel)
+importFrom(limma, eBayes, lmFit, topTable)
+importFrom(plyr, ".", round_any)
+
+## Export
+
+export(getPeakInfo, getTIC, getAllXics, getDiffTable, bakedpi)
+exportClass("cms")
