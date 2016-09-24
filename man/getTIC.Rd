@@ -17,14 +17,12 @@ Computes TIC from parsed raw data. Intensities are on the log2 scale. This
 can be computed after running \code{getPeakInfo}.
 }
 \examples{
-\dontrun{
 if (require(mtbls2)) {
 data(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")
 file <- list.files(filepath, recursive = TRUE, full.names = TRUE)[1]
 pinfo <- getPeakInfo(file)
 tic <- getTIC(pinfo[[1]])
-}
 }
 }
 

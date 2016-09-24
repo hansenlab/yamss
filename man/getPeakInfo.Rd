@@ -20,14 +20,12 @@ Only MS1 information is kept, and records that have zero intensity are also
 removed.
 }
 \examples{
-\dontrun{
 if (require(mtbls2)) {
 data(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")
 files <- list.files(filepath, recursive = TRUE, full.names = TRUE)
 files <- files[c(1,2)]
 pinfo <- getPeakInfo(files)
-}
 }
 }
 

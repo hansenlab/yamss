@@ -25,8 +25,7 @@ In a given M/Z range, the maximum intensity observed in each scan gives the
 extracted ion chromatogram.
 }
 \examples{
-\dontrun{
-if (require(mtbls2) & require(yamss)) {
+if (require(mtbls2)) {
 data(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")
 files <- list.files(filepath, recursive = TRUE, full.names = TRUE)
@@ -38,7 +37,6 @@ obj <- out$obj
 DT <- out$DT
 mzranges <- rbind(c(455.09, 455.13), c(264, 264.04))
 xicList <- getAllXics(mzranges, DT)
-}
 }
 }
 
