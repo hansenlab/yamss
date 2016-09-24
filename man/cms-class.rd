@@ -50,12 +50,12 @@ performed.
        detected: M/Z bounds, scan bounds, and ID number ("blobnum")
     }
     \item{\code{xicsRaw}:}{
-       a list of extracted ion chromatograms corresponding to each peak. 
-       Each list element is a matrix where each column is the XIC for 
-       one sample
+       a list of extracted ion chromatograms corresponding to each peak 
+       for each sample
     }
     \item{\code{xicsImputed}:}{
-       a list of interpolated XICs used for quantification
+       a list of interpolated XICs used for quantification. This is only 
+       computed when retention time alignment isn't performed
     }
     \item{\code{quants}:}{
        a matrix of quantifications where rows correspond to peaks and 
