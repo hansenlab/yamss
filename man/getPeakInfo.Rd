@@ -13,7 +13,7 @@ A list with length equal to the number of files containing M/Z,
   spectrum information.
 }
 \description{
-Reads raw .mzdata and .cdf files and stores the data in a \code{data.table}.
+Reads raw .mzdata and .cdf files and stores the data in a list.
 }
 \details{
 Only MS1 information is kept, and records that have zero intensity are also
