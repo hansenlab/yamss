@@ -6,7 +6,7 @@ bakedpi(files, classes, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1),
   outfileDens = NULL, dortalign = FALSE, mzsubset = NULL, verbose = TRUE)
 }
 \arguments{
-\item{files}{A character vector of raw data filenames}
+\item{files}{A character vector of filepaths to the raw data}
 
 \item{classes}{A character vector of class labels for the samples}
 

@@ -10,10 +10,6 @@ rawpeakinfo <- function(obj) {
     obj@rawpeakinfo
 }
 
-mzParams <- function(obj) {
-    obj@mzParams
-}
-
 densityEstimate <- function(obj) {
     obj@dens
 }
@@ -26,7 +22,7 @@ densityQuantiles <- function(obj) {
     obj@densquants
 }
 
-peakInfo <- function(obj) {
+peakBounds <- function(obj) {
     obj@blobs
 }
 

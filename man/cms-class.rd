@@ -13,13 +13,13 @@ performed.
 \section{Slots}{
   \describe{
     \item{\code{files}:}{
-       a character of filepaths to the raw data
+       a character vector of filepaths to the raw data
     }
     \item{\code{classes}:}{
        a vector of sample class information corresponding to \code{files}
     }
     \item{\code{rawpeakinfo}:}{
-       a list of raw M/Z, scan, and intensity information for each sample
+       a list of raw spectral information for each scan in each sample
     }
     \item{\code{mzParams}:}{
        a list containing the minimum and maximum M/Z value and number of 
