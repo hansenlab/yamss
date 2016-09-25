@@ -156,126 +156,110 @@ backgroundCorrection <- function(obj, DT, verbose = FALSE) {
     return(list(obj = obj, DTbgcorr = DTbgcorr))
 }
 
-rtAlignment <- function(obj, rtwarp = NULL, DT, DTbgcorr, verbose = FALSE) {
+rtAlignment <- function(obj, DT, DTbgcorr, verbose = FALSE) {
     mzParams <- obj@mzParams
-    if (is.null(rtwarp)) {
-        if(verbose) {
-            message("[rtAlignment] Get rough M/Z regions to align")
-        }
-        ## Get density of M/Z values
-        ## This density will be thresholded to yield M/Z regions
-        mzdens <- density(DTbgcorr[,mz]/1e5, weights = DTbgcorr[,intensity]/sum(DTbgcorr[,intensity]), n = 2^ceiling(log2(nrow(DTbgcorr))), bw = 0.005)
-        ## Get M/Z regions for a variety of quantile cutoffs
-        qdens <- quantile(mzdens$y, seq(0.5,0.99,0.01))
-        mzbounds <- lapply(qdens, function(cutoff) {
-            ir <- whichAsIRanges(mzdens$y > cutoff)
-            cbind(mzdens$x[start(ir)], mzdens$x[end(ir)])
-        })
-        ## Get 90th percentile of M/Z widths for each set of M/Z bounds
-        p90 <- sapply(mzbounds, function(mat) {
-            quantile(mat[,2] - mat[,1], 0.9)
-        })
-        ## What is the first cutoff index that for which the 90th percentile of M/Z widths
-        ## is less than 0.05?
-        ## i.e. We want the lowest cutoff such that the wide M/Z widths are not too wide
-        wh <- which.max(p90 < 0.05)
-        irmzr <- IRanges(start = as.integer(mzbounds[[wh]][,1]*1e5), end = as.integer(mzbounds[[wh]][,2]*1e5))
-        if(verbose) {
-            message("[rtAlignment] Get XICs for these regions")
-        }
-        ptime1 <- proc.time()
-        xics <- getAllXics(mzranges = irmzr, DT = DT)
-        scans <- 1:obj@mzParams$maxScan
-        xicsImputed <- lapply(xics, function(x) {
-            do.call(cbind, lapply(1:ncol(x), function(col) {
-                               bool <- x[,col] > 1e-6
-                               if (sum(bool) < 2)
-                                   return(x[,col])
-                               approx(scans[bool], x[bool,col], xout = scans, rule = 2)$y
-                           }))
-        })
-        ptime2 <- proc.time()
-        stime <- (ptime2 - ptime1)[3]
-        if(verbose) {
-            message(sprintf("[rtAlignment]  .. done in %.1f secs.", stime))
-            message("[rtAlignment] Find best shifts")
-        }
-        ptime1 <- proc.time()
-        shifts <- -20:20
-        DTbgcorr[, scanorig := scan]
-        DT[, scanorig := scan]
-        shiftsList <- lapply(seq_along(irmzr), function(i) {
-            xicmat <- xics[[i]]
-            xicimpmat <- xicsImputed[[i]]
-            refsamp <- which.max(colSums(xicmat))
-            bestShiftBySample <- sapply(seq_along(obj@files), function(s) {
-                if (s==refsamp) {
-                    return(0)
-                }
-                corrShifts <- sapply(shifts, function(shift) {
-                    if (shift < 0) {
-                        x <- tail(xicimpmat[,s], shift)
-                        ref <- head(xicimpmat[,refsamp], shift)
-                    } else if (shift==0) {
-                        x <- xicimpmat[,s]
-                        ref <- xicimpmat[,refsamp]
-                    } else {
-                        x <- head(xicimpmat[,s], -shift)
-                        ref <- tail(xicimpmat[,refsamp], -shift)
-                    }
-                    cor(x, ref)
-                })
-                if (sum(!is.na(corrShifts))==0) {
-                    return(0)
-                }
-                shifts[which.max(corrShifts)]
-            })
-            return(bestShiftBySample)
-        })
-        ptime2 <- proc.time()
-        stime <- (ptime2 - ptime1)[3]
-        if(verbose) {
-            message(sprintf("[rtAlignment]  .. done in %.1f secs.", stime))
-            message("[rtAlignment] Remap scans")
-        }
-        obj@alignments <- shiftsList
-        ptime1 <- proc.time()
-        setkey(DTbgcorr, mz, sample)
-        setkey(DT, mz, sample)
-        for (i in seq_along(irmzr)) {
-            mzseq <- seq(start(irmzr[i]), end(irmzr[i]))
-            for (s in seq_along(obj@files)) {
-                DT[CJ(mzseq,s), shift := shiftsList[[i]][s], nomatch = 0]
-                DTbgcorr[CJ(mzseq,s), shift := shiftsList[[i]][s], nomatch = 0]
+    if(verbose) {
+        message("[rtAlignment] Get rough M/Z regions to align")
+    }
+    ## Get density of M/Z values
+    ## This density will be thresholded to yield M/Z regions
+    mzdens <- density(DTbgcorr[,mz]/1e5, weights = DTbgcorr[,intensity]/sum(DTbgcorr[,intensity]), n = 2^ceiling(log2(nrow(DTbgcorr))), bw = 0.005)
+    ## Get M/Z regions for a variety of quantile cutoffs
+    qdens <- quantile(mzdens$y, seq(0.5,0.99,0.01))
+    mzbounds <- lapply(qdens, function(cutoff) {
+        ir <- whichAsIRanges(mzdens$y > cutoff)
+        cbind(mzdens$x[start(ir)], mzdens$x[end(ir)])
+    })
+    ## Get 90th percentile of M/Z widths for each set of M/Z bounds
+    p90 <- sapply(mzbounds, function(mat) {
+        quantile(mat[,2] - mat[,1], 0.9)
+    })
+    ## What is the first cutoff index that for which the 90th percentile of M/Z widths
+    ## is less than 0.05?
+    ## i.e. We want the lowest cutoff such that the wide M/Z widths are not too wide
+    wh <- which.max(p90 < 0.05)
+    irmzr <- IRanges(start = as.integer(mzbounds[[wh]][,1]*1e5), end = as.integer(mzbounds[[wh]][,2]*1e5))
+    if(verbose) {
+        message("[rtAlignment] Get XICs for these regions")
+    }
+    ptime1 <- proc.time()
+    xics <- getAllXics(mzranges = irmzr, DT = DT)
+    scans <- 1:obj@mzParams$maxScan
+    xicsImputed <- lapply(xics, function(x) {
+        do.call(cbind, lapply(1:ncol(x), function(col) {
+                           bool <- x[,col] > 1e-6
+                           if (sum(bool) < 2)
+                               return(x[,col])
+                           approx(scans[bool], x[bool,col], xout = scans, rule = 2)$y
+                       }))
+    })
+    ptime2 <- proc.time()
+    stime <- (ptime2 - ptime1)[3]
+    if(verbose) {
+        message(sprintf("[rtAlignment]  .. done in %.1f secs.", stime))
+        message("[rtAlignment] Find best shifts")
+    }
+    ptime1 <- proc.time()
+    shifts <- -20:20
+    DTbgcorr[, scanorig := scan]
+    DT[, scanorig := scan]
+    shiftsList <- lapply(seq_along(irmzr), function(i) {
+        xicmat <- xics[[i]]
+        xicimpmat <- xicsImputed[[i]]
+        refsamp <- which.max(colSums(xicmat))
+        bestShiftBySample <- sapply(seq_along(obj@files), function(s) {
+            if (s==refsamp) {
+                return(0)
             }
+            corrShifts <- sapply(shifts, function(shift) {
+                if (shift < 0) {
+                    x <- tail(xicimpmat[,s], shift)
+                    ref <- head(xicimpmat[,refsamp], shift)
+                } else if (shift==0) {
+                    x <- xicimpmat[,s]
+                    ref <- xicimpmat[,refsamp]
+                } else {
+                    x <- head(xicimpmat[,s], -shift)
+                    ref <- tail(xicimpmat[,refsamp], -shift)
+                }
+                cor(x, ref)
+            })
+            if (sum(!is.na(corrShifts))==0) {
+                return(0)
+            }
+            shifts[which.max(corrShifts)]
+        })
+        return(bestShiftBySample)
+    })
+    ptime2 <- proc.time()
+    stime <- (ptime2 - ptime1)[3]
+    if(verbose) {
+        message(sprintf("[rtAlignment]  .. done in %.1f secs.", stime))
+        message("[rtAlignment] Remap scans")
+    }
+    obj@alignments <- shiftsList
+    ptime1 <- proc.time()
+    setkey(DTbgcorr, mz, sample)
+    setkey(DT, mz, sample)
+    for (i in seq_along(irmzr)) {
+        mzseq <- seq(start(irmzr[i]), end(irmzr[i]))
+        for (s in seq_along(obj@files)) {
+            DT[CJ(mzseq,s), shift := shiftsList[[i]][s], nomatch = 0]
+            DTbgcorr[CJ(mzseq,s), shift := shiftsList[[i]][s], nomatch = 0]
         }
-        DT[, shift := ifelse(is.na(shift), 0, shift)]
-        DTbgcorr[, shift := ifelse(is.na(shift), 0, shift)]
-        DT[, scan := scan + shift]
-        DTbgcorr[, scan := scan + shift]
-        DT[, shift := NULL]
-        DTbgcorr[, shift := NULL]
-        DT <- DT[scan >= 1 & scan <= obj@mzParams$maxScan]
-        DTbgcorr <- DTbgcorr[scan >= 1 & scan <= obj@mzParams$maxScan]
-        ptime2 <- proc.time()
-        stime <- (ptime2 - ptime1)[3]
-        if(verbose) {
-            message(sprintf(".. done in %.1f secs.", stime))
-        }
-    } else {
-        obj@alignments <- rtwarp
-        if(verbose) {
-            message("[rtAlignment] Remap scans")
-        }
-        DTbgcorr[, scanorig := scan]
-        DT[, scanorig := scan]
-        for (i in seq_along(obj@files)) {
-            setkey(DTbgcorr, sample)
-            setkey(DT, sample)
-            warpfun <- obj@alignments[[i]]
-            DTbgcorr[.(i), scan := warpfun(scan), nomatch = 0]
-            DT[.(i), scan := warpfun(scan), nomatch = 0]
-        }
+    }
+    DT[, shift := ifelse(is.na(shift), 0, shift)]
+    DTbgcorr[, shift := ifelse(is.na(shift), 0, shift)]
+    DT[, scan := scan + shift]
+    DTbgcorr[, scan := scan + shift]
+    DT[, shift := NULL]
+    DTbgcorr[, shift := NULL]
+    DT <- DT[scan >= 1 & scan <= obj@mzParams$maxScan]
+    DTbgcorr <- DTbgcorr[scan >= 1 & scan <= obj@mzParams$maxScan]
+    ptime2 <- proc.time()
+    stime <- (ptime2 - ptime1)[3]
+    if(verbose) {
+        message(sprintf(".. done in %.1f secs.", stime))
     }
     list(obj = obj, DT = DT, DTbgcorr = DTbgcorr)
 }
@@ -610,20 +594,20 @@ bakedpi <- function(files, classes, dbandwidth = c(0.005, 10), dgridstep = c(0.0
     if(verbose) {
         message("[bakedpi] Reading data")
     }
-    out <- readRawDataAsDataTable(obj = obj, files = files)
+    out <- readRawDataAsDataTable(obj = obj, files = files, verbose = verbose)
     obj <- out$obj
     DT <- out$DT
 
     if(verbose) {
         message("[bakedpi] Background correction")
     }
-    out <- backgroundCorrection(obj = obj, DT = DT)
+    out <- backgroundCorrection(obj = obj, DT = DT, verbose = verbose)
     obj <- out$obj
     DTbgcorr <- out$DTbgcorr
     rm(out)
 
     if (dortalign) {
-        out <- rtAlignment(obj = obj, rtwarp = rtwarp, DT = DT, DTbgcorr = DTbgcorr)
+        out <- rtAlignment(obj = obj, DT = DT, DTbgcorr = DTbgcorr, verbose = verbose)
         obj <- out$obj
         DT <- out$DT
         DTbgcorr <- out$DTbgcorr
@@ -633,13 +617,15 @@ bakedpi <- function(files, classes, dbandwidth = c(0.005, 10), dgridstep = c(0.0
         message("[bakedpi] Density estimation")
     }
     dmat <- densityEstimation(obj = obj, DTbgcorr = DTbgcorr, dbandwidth = dbandwidth,
-                              dgridstep = dgridstep, outfileDens = outfileDens)$dmat
+                              dgridstep = dgridstep, outfileDens = outfileDens,
+                              verbose = verbose)$dmat
     obj@dens <- dmat
 
     if(verbose) {
         message("[bakedpi] Computing cutoff")
     }
-    cutoff <- getCutoff(obj = obj, densmat = dmat, by = 2, DTbgcorr = DTbgcorr)
+    cutoff <- getCutoff(obj = obj, densmat = dmat, by = 2, 
+                        DTbgcorr = DTbgcorr, verbose = verbose)
     qs <- seq(0,1,0.001)
     obj@densquants <- quantile(dmat[dmat!=0], qs)
     qcutoff <- which.min(abs(cutoff-obj@densquants))
@@ -648,16 +634,16 @@ bakedpi <- function(files, classes, dbandwidth = c(0.005, 10), dgridstep = c(0.0
     if(verbose) {
         message("[bakedpi] Getting blobs")
     }
-    obj@blobs <- getBlobs(densmat = dmat, dcutoff = obj@dcutoff)
+    obj@blobs <- getBlobs(densmat = dmat, dcutoff = obj@dcutoff, verbose = verbose)
 
     ## Get XICs and quantifications - methods differ if RT alignment was performed
     if(verbose) {
         message("[bakedpi] Quantifying")
     }
     if (dortalign) {
-        obj <- getXICsAndQuantifyWithRetentionTime(obj = obj, DT = DT)
+        obj <- getXICsAndQuantifyWithRetentionTime(obj = obj, DT = DT, verbose = verbose)
     } else {
-        obj <- getXICsAndQuantifyWithoutRetentionTime(obj = obj, DT = DT)
+        obj <- getXICsAndQuantifyWithoutRetentionTime(obj = obj, DT = DT, verbose = verbose)
     }
     
     ## Differential analysis
