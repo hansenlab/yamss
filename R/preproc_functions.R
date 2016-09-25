@@ -393,6 +393,7 @@ densityEstimation <- function(obj, DTbgcorr, dgridstep = dgridstep,
     }
     rm(densList)
     rownames(dmat) <- seq(obj@mzParams$minMZ, obj@mzParams$maxMZ, length.out = nrow(dmat))
+    colnames(dmat) <- seq(1, obj@mzParams$maxScan, dgridstep[2])
     return(list(dmat = dmat))
 }
 
@@ -405,6 +406,7 @@ getCutoff <- function(obj, densmat, by = 2, DTbgcorr, verbose = FALSE) {
     mzregions <- seq(mzParams$minMZ, mzParams$maxMZ, by)
     setkey(DTbgcorr, mz)
     densmatMzs <- as.numeric(rownames(densmat))
+    densmatScans <- as.numeric(colnames(densmat))
     ## For each M/Z region, find the data point with the highest intensity
     ## Find the peak region corrresponding to this data point
     ## Get the density estimate values in this region
@@ -438,10 +440,13 @@ getCutoff <- function(obj, densmat, by = 2, DTbgcorr, verbose = FALSE) {
         subdt <- subdt[, .N, by = scan]
         numperscan <- rep(0, mzParams$maxScan)
         numperscan[subdt[,scan]] <- subdt[,N]
-        left <- ifelse(sum(numperscan[scan:1]==0)==0, 1, scan-which.max(numperscan[scan:1]==0)+1)
-        right <- ifelse(sum(numperscan[scan:mzParams$maxScan]==0)==0,
-                        mzParams$maxScan,
-                        scan+which.max(numperscan[scan:mzParams$maxScan]==0)-1)
+        names(numperscan) <- 1:mzParams$maxScan
+        numperscan <- numperscan[as.character(densmatScans)]
+        scanIndex <- which.min(abs(densmatScans-scan))
+        left <- ifelse(sum(numperscan[scanIndex:1]==0)==0, 1, scanIndex-which.max(numperscan[scanIndex:1]==0)+1)
+        right <- ifelse(sum(numperscan[scanIndex:length(densmatScans)]==0)==0,
+                        length(densmatScans),
+                        scanIndex+which.max(numperscan[scanIndex:length(densmatScans)]==0)-1)
         return(as.numeric(densmat[densmatRows,left:right]))
     })
     ## Use features of the distribution of these density values to select a cutoff
@@ -472,12 +477,15 @@ getBlobs <- function(densmat, dcutoff, verbose = FALSE) {
         message("[getBlobs] Getting blobs")
     }
     ptime1 <- proc.time()
-    bool <- densmat > dcutoff
+    ## Get grid ticks
     mzs <- as.numeric(rownames(densmat))
     mzs <- c(mzs, tail(mzs, 1)+(mzs[2]-mzs[1]))
+    scans <- as.numeric(colnames(densmat))
+    ## Connected-components labeling
+    bool <- densmat > dcutoff
     blobs <- bwlabel(bool)
     wh <- which(blobs!=0, arr.ind = TRUE)
-    dtblobs <- data.table(row = wh[,1], col = wh[,2], blobnum = blobs[wh])
+    dtblobs <- data.table(row = wh[,1], col = scans[wh[,2]], blobnum = blobs[wh])
     setkey(dtblobs, blobnum)
     blobsDT <- dtblobs[, .(mzmin = mzs[min(row)], mzmax = mzs[max(row)+1], scanmin = min(col), scanmax = max(col)), by = blobnum]
     ## Make matrix of blob information
