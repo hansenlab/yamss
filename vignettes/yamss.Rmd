@@ -31,7 +31,7 @@ library(mtbls2)
 # library(faahKO)
 ```
 
-# Quick start: processing a metabolomics dataset
+# Processing a metabolomics dataset
 
 We will be looking at data provided in the `mtbls2` data package. In this experiment, investigators exposed wild-type and mutant *Arabidopsis thaliana* leaves to silver nitrate and performed global LC/MS profiling. The experiment was repeated twice, but we will only be looking at the first replicate. There are 4 wild-type and 4 mutant plants in this experiment.
 
@@ -48,6 +48,27 @@ cmsobj <- bakedpi(files = files, classes = classes, dbandwidth = c(0.01, 10), dg
 ```
 
 The resulting object is an instance of class `cms` and contains several pieces of information used in preprocessing as well as differential analysis results.
+
+We can access the differential analysis report with `diffrep`.
+
+```{r}
+dr <- diffrep(cmsobj)
+head(dr)
+```
+
+Let's look at the peak bound information for the peaks with the strongest differential signal. We can store the IDs for the top 10 peaks with
+
+```{r}
+topPeaks <- as.numeric(rownames(dr)[1:10])
+```
+
+We can access the peak bound information with `peakBounds` and select the rows corresponding to `topPeaks`:
+
+```{r}
+bounds <- peakBounds(cmsobj)
+idx <- match(topPeaks, bounds[,"blobnum"])
+bounds[idx,]
+```
 
 # Sessioninfo
 
