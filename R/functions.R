@@ -1,5 +1,5 @@
 getPeakInfo <- function(files) {
-    isCDF <- grep("\\.cdf", files[1], ignore.case = TRUE)==1
+    isCDF <- length(grep("\\.cdf", files[1], ignore.case = TRUE))==1
     backend <- ifelse(isCDF, "netCDF", "Ramp")
     peakInfoAllfiles <- lapply(seq_along(files), function(i) {
         msobj <- openMSfile(files[i], backend = backend)
