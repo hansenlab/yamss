@@ -2,10 +2,13 @@
 \alias{readRawDataAsDataTable}
 \title{Compute extracted ion chromatograms for multiple regions.}
 \usage{
-readRawDataAsDataTable(obj, verbose = FALSE)
+readRawDataAsDataTable(obj, mzsubset = NULL, verbose = FALSE)
 }
 \arguments{
 \item{obj}{An object of class "cms" with the \code{files} slot filled.}
+
+\item{mzsubset}{A length-2 vector indicating a subset of the M/Z range to 
+process. \code{NULL} otherwise.}
 
 \item{verbose}{Should the function be verbose?}
 }

@@ -3,7 +3,7 @@
 \title{Process raw data to obtain quantifications.}
 \usage{
 bakedpi(files, classes, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1),
-  outfileDens = NULL, dortalign = FALSE, verbose = TRUE)
+  outfileDens = NULL, dortalign = FALSE, mzsubset = NULL, verbose = TRUE)
 }
 \arguments{
 \item{files}{A character vector of raw data filenames}
@@ -11,15 +11,19 @@ bakedpi(files, classes, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1),
 \item{classes}{A character vector of class labels for the samples}
 
 \item{dbandwidth}{A length-2 vector indicating the kernel density bandwidth
-in the M/Z and retention time (scan) directions. Default: \code{c(0.05,10)}}
+in the M/Z and retention time (scan) directions. Default: \code{c(0.005,10)}}
 
-\item{dgridstep}{A length-2 vector indicating the grid step sizes}
+\item{dgridstep}{A length-2 vector indicating the grid step sizes. Default: 
+\code{c(0.005,1)}.}
 
 \item{outfileDens}{Name of a file to save density estimate. If NULL,
 no output is saved.}
 
 \item{dortalign}{A logical value. Should retention time correction be
 performed?}
+
+\item{mzsubset}{A length-2 vector indicating a subset of the M/Z range to 
+process. \code{NULL} otherwise.}
 
 \item{verbose}{Should the function be verbose?}
 }
