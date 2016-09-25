@@ -50,8 +50,7 @@ readRawDataAsDataTable <- function(obj, mzsubset = NULL, verbose = FALSE) {
     }
 
     ## Get minimum and maximum M/Zs and scan numbers
-    obj@mzParams <- list(maxScan = max(sapply(obj@rawpeakinfo, length)),
-                         minScan = min(sapply(obj@rawpeakinfo, length)),
+    obj@mzParams <- list(maxScan = max(DT[,scan]),
                          maxMZ = 10*ceiling(max(DT[,mz])/1e5/10),
                          minMZ = 10*floor(min(DT[,mz])/1e5/10))
     list(obj = obj, DT = DT)
