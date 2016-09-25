@@ -26,7 +26,6 @@ importMethodsFrom(IRanges, as.matrix, cor, diff, ifelse,
 importFrom(data.table, ":=", ".N", CJ, data.table, rbindlist, setkey)
 importFrom(EBImage, bwlabel)
 importFrom(limma, eBayes, lmFit, topTable)
-importFrom(plyr, ".", round_any)
 
 ## Export
 
