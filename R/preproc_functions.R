@@ -26,7 +26,7 @@ setClass("cms",
 ## 8. Quantify
 ## 9. Differential analysis
 
-readRawDataAsDataTable <- function(obj, verbose = FALSE) {
+readRawDataAsDataTable <- function(obj, mzsubset = NULL, verbose = FALSE) {
     if(verbose) {
         message(sprintf("[readRawDataAsDataTable]: Reading %i files", length(obj@files)))
     }
@@ -42,6 +42,13 @@ readRawDataAsDataTable <- function(obj, verbose = FALSE) {
                      intensity = rawdatamat[,"intensity"],
                      scan = rawdatamat[,"scan"],
                      sample = rawdatamat[,"sample"])
+    ## Subset if specified
+    setkey(DT, mz, scan)
+    if (!is.null(mzsubset)) {
+        mzseq <- seq(as.integer(mzsubset[1]*1e5), as.integer(mzsubset[2]*1e5))
+        DT <- DT[.(mzseq), nomatch = 0]
+    }
+
     ## Get minimum and maximum M/Zs and scan numbers
     obj@mzParams <- list(maxScan = max(sapply(obj@rawpeakinfo, length)),
                          minScan = min(sapply(obj@rawpeakinfo, length)),
@@ -592,15 +599,16 @@ getXICsAndQuantifyWithoutRetentionTime <- function(obj, DT, verbose = FALSE) {
     obj
 }
 
-bakedpi <- function(files, classes, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1),
-                    outfileDens = NULL, dortalign = FALSE, verbose = TRUE) {
+bakedpi <- function(files, classes, dbandwidth = c(0.005, 10),
+                    dgridstep = c(0.005, 1), outfileDens = NULL,
+                    dortalign = FALSE, mzsubset = NULL, verbose = TRUE) {
     subverbose <- max(as.integer(verbose) - 1L, 0)
     obj <- new("cms", files = files, classes = classes)
     ## Parse raw data
     if(verbose) {
         message("[bakedpi] Reading data")
     }
-    out <- readRawDataAsDataTable(obj = obj, verbose = verbose)
+    out <- readRawDataAsDataTable(obj = obj, mzsubset = mzsubset, verbose = verbose)
     obj <- out$obj
     DT <- out$DT
 
