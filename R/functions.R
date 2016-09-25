@@ -24,8 +24,10 @@ getTIC <- function(peak.info) {
 }
 
 getAllXics <- function(mzranges, DT) {
-    ## Convert mzranges to an IRanges
-    mzranges <- IRanges(start = as.integer(mzranges[,1]*1e5), end = as.integer(mzranges[,2]*1e5))
+    ## Convert mzranges to an IRanges if a matrix
+    if (class(mzranges) != "IRanges") {
+        mzranges <- IRanges(start = as.integer(mzranges[,1]*1e5), end = as.integer(mzranges[,2]*1e5))
+    }
     ## Sort DT and get XICs
     setkey(DT, mz, scan, sample)
     maxScan <- max(DT[,scan])
