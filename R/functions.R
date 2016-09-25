@@ -1,6 +1,8 @@
 getPeakInfo <- function(files) {
+    isCDF <- grep("\\.cdf", files[1], ignore.case = TRUE)==1
+    backend <- ifelse(isCDF, "netCDF", "Ramp")
     peakInfoAllfiles <- lapply(seq_along(files), function(i) {
-        msobj <- openMSfile(files[i])
+        msobj <- openMSfile(files[i], backend = backend)
         peakInfo <- peaks(msobj)
         ## Only keep scans where the MZ level is 1 (MS versus MS-MS)
         headerInfo <- header(msobj)
