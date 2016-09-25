@@ -31,7 +31,7 @@ filepath <- file.path(find.package("mtbls2"), "mzData")
 files <- list.files(filepath, recursive = TRUE, full.names = TRUE)[1:2]
 obj <- new("cms", files = files)
 ## Parse raw data
-out <- readRawDataAsDataTable(obj = obj, files = files)
+out <- readRawDataAsDataTable(obj = obj)
 obj <- out$obj
 DT <- out$DT
 mzranges <- rbind(c(455.09, 455.13), c(264, 264.04))

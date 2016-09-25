@@ -4,7 +4,7 @@ setClass("cms",
         rawpeakinfo = "list",
         mzParams = "list",
         bgsmooths = "list",
-        dens = "list",
+        dens = "matrix",
         dcutoff = "numeric",
         densquants = "numeric",
         alignments = "list",
@@ -26,11 +26,11 @@ setClass("cms",
 ## 8. Quantify
 ## 9. Differential analysis
 
-readRawDataAsDataTable <- function(obj, files, verbose = FALSE) {
+readRawDataAsDataTable <- function(obj, verbose = FALSE) {
     if(verbose) {
-        message(sprintf("[readRawDataAsDataTable]: Reading %i files", length(files)))
+        message(sprintf("[readRawDataAsDataTable]: Reading %i files", length(obj@files)))
     }
-    obj@rawpeakinfo <- getPeakInfo(files)
+    obj@rawpeakinfo <- getPeakInfo(obj@files)
     ## Make raw data matrix and data.table
     rawdatamat <- do.call(rbind, lapply(seq_along(obj@rawpeakinfo), function(s) {
                                      cbind(do.call(rbind, lapply(seq_along(obj@rawpeakinfo[[s]]), function(scan) {
@@ -587,14 +587,12 @@ getXICsAndQuantifyWithoutRetentionTime <- function(obj, DT, verbose = FALSE) {
 bakedpi <- function(files, classes, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1),
                     outfileDens = NULL, dortalign = FALSE, verbose = TRUE) {
     subverbose <- max(as.integer(verbose) - 1L, 0)
-    obj <- new("cms") # these are the results
-    obj@files <- files
-    obj@classes <- classes
+    obj <- new("cms", files = files, classes = classes)
     ## Parse raw data
     if(verbose) {
         message("[bakedpi] Reading data")
     }
-    out <- readRawDataAsDataTable(obj = obj, files = files, verbose = verbose)
+    out <- readRawDataAsDataTable(obj = obj, verbose = verbose)
     obj <- out$obj
     DT <- out$DT
 

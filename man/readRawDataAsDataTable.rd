@@ -2,12 +2,10 @@
 \alias{readRawDataAsDataTable}
 \title{Compute extracted ion chromatograms for multiple regions.}
 \usage{
-readRawDataAsDataTable(obj, files, verbose = FALSE)
+readRawDataAsDataTable(obj, verbose = FALSE)
 }
 \arguments{
-\item{obj}{An object of class "cms".}
-
-\item{files}{A character vector of raw data filenames.}
+\item{obj}{An object of class "cms" with the \code{files} slot filled.}
 
 \item{verbose}{Should the function be verbose?}
 }
@@ -26,7 +24,7 @@ filepath <- file.path(find.package("mtbls2"), "mzData")
 files <- list.files(filepath, recursive = TRUE, full.names = TRUE)[1:2]
 obj <- new("cms", files = files)
 ## Parse raw data
-out <- readRawDataAsDataTable(obj = obj, files = files)
+out <- readRawDataAsDataTable(obj = obj)
 obj <- out$obj
 DT <- out$DT
 }
