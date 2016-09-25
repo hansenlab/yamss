@@ -14,7 +14,7 @@ Depends:
     limma
 Suggests:
     knitr,
-    rmarkdown
+    rmarkdown,
     mtbls2
 Imports:
     IRanges,
