@@ -11,8 +11,7 @@ Depends:
     methods,
     BiocGenerics (>= 0.15.3),
     ProtGenerics,
-    limma,
-    data.table
+    limma
 Suggests:
     BiocStyle,
     knitr,
@@ -25,6 +24,7 @@ Imports:
     EBImage,
     Matrix,
     mzR,
+    data.table,
     grDevices
 VignetteBuilder: knitr
 License: Artistic-2.0
