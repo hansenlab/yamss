@@ -609,20 +609,20 @@ bakedpi <- function(files, classes, dbandwidth = c(0.005, 10),
     if(verbose) {
         message("[bakedpi] Reading data")
     }
-    out <- readRawDataAsDataTable(obj = obj, mzsubset = mzsubset, verbose = verbose)
+    out <- readRawDataAsDataTable(obj = obj, mzsubset = mzsubset, verbose = subverbose)
     obj <- out$obj
     DT <- out$DT
 
     if(verbose) {
         message("[bakedpi] Background correction")
     }
-    out <- backgroundCorrection(obj = obj, DT = DT, verbose = verbose)
+    out <- backgroundCorrection(obj = obj, DT = DT, verbose = subverbose)
     obj <- out$obj
     DTbgcorr <- out$DTbgcorr
     rm(out)
 
     if (dortalign) {
-        out <- rtAlignment(obj = obj, DT = DT, DTbgcorr = DTbgcorr, verbose = verbose)
+        out <- rtAlignment(obj = obj, DT = DT, DTbgcorr = DTbgcorr, verbose = subverbose)
         obj <- out$obj
         DT <- out$DT
         DTbgcorr <- out$DTbgcorr
@@ -633,14 +633,14 @@ bakedpi <- function(files, classes, dbandwidth = c(0.005, 10),
     }
     dmat <- densityEstimation(obj = obj, DTbgcorr = DTbgcorr, dbandwidth = dbandwidth,
                               dgridstep = dgridstep, outfileDens = outfileDens,
-                              verbose = verbose)$dmat
+                              verbose = subverbose)$dmat
     obj@dens <- dmat
 
     if(verbose) {
         message("[bakedpi] Computing cutoff")
     }
     cutoff <- getCutoff(obj = obj, densmat = dmat, by = 2, 
-                        DTbgcorr = DTbgcorr, verbose = verbose)
+                        DTbgcorr = DTbgcorr, verbose = subverbose)
     qs <- seq(0,1,0.001)
     obj@densquants <- quantile(dmat[dmat!=0], qs)
     qcutoff <- which.min(abs(cutoff-obj@densquants))
@@ -649,16 +649,16 @@ bakedpi <- function(files, classes, dbandwidth = c(0.005, 10),
     if(verbose) {
         message("[bakedpi] Getting blobs")
     }
-    obj@blobs <- getBlobs(densmat = dmat, dcutoff = obj@dcutoff, verbose = verbose)
+    obj@blobs <- getBlobs(densmat = dmat, dcutoff = obj@dcutoff, verbose = subverbose)
 
     ## Get XICs and quantifications - methods differ if RT alignment was performed
     if(verbose) {
         message("[bakedpi] Quantifying")
     }
     if (dortalign) {
-        obj <- getXICsAndQuantifyWithRetentionTime(obj = obj, DT = DT, verbose = verbose)
+        obj <- getXICsAndQuantifyWithRetentionTime(obj = obj, DT = DT, verbose = subverbose)
     } else {
-        obj <- getXICsAndQuantifyWithoutRetentionTime(obj = obj, DT = DT, verbose = verbose)
+        obj <- getXICsAndQuantifyWithoutRetentionTime(obj = obj, DT = DT, verbose = subverbose)
     }
     
     ## Differential analysis
