@@ -25,7 +25,6 @@ Imports:
     EBImage,
     Matrix,
     mzR,
-    graphics,
     grDevices
 VignetteBuilder: knitr
 License: Artistic-2.0
