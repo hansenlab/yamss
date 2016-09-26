@@ -1,7 +1,10 @@
 setClass("cms",
     slots = c(files = "character",
         classes = "character",
+        rtalign = "logical",
         rawpeakinfo = "list",
+        DT = "data.table",
+        DTbgcorr = "data.table",
         mzParams = "list",
         bgsmooths = "list",
         dens = "matrix",
@@ -53,11 +56,13 @@ readRawDataAsDataTable <- function(obj, mzsubset = NULL, verbose = FALSE) {
     obj@mzParams <- list(maxScan = max(DT[,scan]),
                          maxMZ = 10*ceiling(max(DT[,mz])/1e5/10),
                          minMZ = 10*floor(min(DT[,mz])/1e5/10))
-    list(obj = obj, DT = DT)
+    obj@DT <- DT
+    return(obj)
 }
 
-backgroundCorrection <- function(obj, DT, verbose = FALSE) {
+backgroundCorrection <- function(obj, verbose = FALSE) {
     mzParams <- obj@mzParams
+    DT <- obj@DT
     setkey(DT, mz, scan, sample)
     mzbreaks <- c(seq(mzParams$minMZ, mzParams$maxMZ, 10), mzParams$maxMZ)
     scanbreaks <- seq(1, mzParams$maxScan, 40)
@@ -159,11 +164,14 @@ backgroundCorrection <- function(obj, DT, verbose = FALSE) {
     if(verbose) {
         message(sprintf("[backgroundCorrection]  .. done in %.1f secs.", stime))
     }
-    return(list(obj = obj, DTbgcorr = DTbgcorr))
+    obj@DTbgcorr <- DTbgcorr
+    return(obj)
 }
 
-rtAlignment <- function(obj, DT, DTbgcorr, verbose = FALSE) {
+rtAlignment <- function(obj, verbose = FALSE) {
     mzParams <- obj@mzParams
+    DT <- obj@DT
+    DTbgcorr <- obj@DTbgcorr
     if(verbose) {
         message("[rtAlignment] Get rough M/Z regions to align")
     }
@@ -267,11 +275,14 @@ rtAlignment <- function(obj, DT, DTbgcorr, verbose = FALSE) {
     if(verbose) {
         message(sprintf(".. done in %.1f secs.", stime))
     }
-    list(obj = obj, DT = DT, DTbgcorr = DTbgcorr)
+    obj@DT <- DT
+    obj@DTbgcorr <- DTbgcorr
+    return(obj)
 }
 
-densityEstimation <- function(obj, DTbgcorr, dgridstep = dgridstep,
-                              dbandwidth = dbandwidth, outfileDens, verbose = FALSE) {
+densityEstimation <- function(obj, dgridstep = dgridstep, dbandwidth = dbandwidth, 
+                              outfileDens, verbose = FALSE) {
+    DTbgcorr <- obj@DTbgcorr
     getDensityEstimateApprox <- function(DTbgcorr, bw = dbandwidth,
                                          gridstep = dgridstep, maxbws = 4, mzParams) {
         gridseqMz <- seq(mzParams$minMZ, mzParams$maxMZ, gridstep[1])
@@ -403,12 +414,13 @@ densityEstimation <- function(obj, DTbgcorr, dgridstep = dgridstep,
     return(list(dmat = dmat))
 }
 
-getCutoff <- function(obj, densmat, by = 2, DTbgcorr, verbose = FALSE) {
+getCutoff <- function(obj, densmat, by = 2, verbose = FALSE) {
     if(verbose) {
         message("[getDensityCutoff] Get density cutoff")
     }
     ptime1 <- proc.time()
     mzParams <- obj@mzParams
+    DTbgcorr <- obj@DTbgcorr
     mzregions <- seq(mzParams$minMZ, mzParams$maxMZ, by)
     setkey(DTbgcorr, mz)
     densmatMzs <- as.numeric(rownames(densmat))
@@ -505,11 +517,12 @@ getBlobs <- function(densmat, dcutoff, verbose = FALSE) {
     return(blobs)
 }
 
-getXICsAndQuantifyWithRetentionTime <- function(obj, DT, verbose = FALSE) {
+getXICsAndQuantifyWithRetentionTime <- function(obj, verbose = FALSE) {
     if(verbose) {
         message("[getXICsAndQuantifyWithRetentionTime] compute XICs")
     }
     mzParams <- obj@mzParams
+    DT <- obj@DT
     setkey(DT, mz, scan)
     ptime1 <- proc.time()
     obj@xicsRaw <- lapply(1:nrow(obj@blobs), function(i) {
@@ -550,14 +563,15 @@ getXICsAndQuantifyWithRetentionTime <- function(obj, DT, verbose = FALSE) {
         message(sprintf("[getXICsAndQuantifyWithRetentionTime]  .. done in %.1f secs.", stime))
     }
     obj@quants <- quantmat
-    obj
+    return(obj)
 }
 
-getXICsAndQuantifyWithoutRetentionTime <- function(obj, DT, verbose = FALSE) {
+getXICsAndQuantifyWithoutRetentionTime <- function(obj, verbose = FALSE) {
     if(verbose) {
         message("[getXICsAndQuantifyWithoutRetentionTime] compute XICs")
     }
     mzParams <- obj@mzParams
+    DT <- obj@DT
     ptime1 <- proc.time()
     obj@xicsRaw <- getAllXics(mzranges = IRanges(start = as.integer(obj@blobs[,"mzmin"]*1e5),
                                                  end = as.integer(obj@blobs[,"mzmax"]*1e5)), DT = DT)
@@ -595,7 +609,7 @@ getXICsAndQuantifyWithoutRetentionTime <- function(obj, DT, verbose = FALSE) {
                                    colSums(mat)
                                }))
     obj@quants <- quantmat
-    obj
+    return(obj)
 }
 
 bakedpi <- function(files, classes, dbandwidth = c(0.005, 10),
@@ -604,34 +618,26 @@ bakedpi <- function(files, classes, dbandwidth = c(0.005, 10),
     ## Check that bandwidth is >= gridstep for binning purposes
     stopifnot(sum(dbandwidth >= dgridstep)==2)
     subverbose <- max(as.integer(verbose) - 1L, 0)
-    obj <- new("cms", files = files, classes = classes)
+    obj <- new("cms", files = files, classes = classes, rtalign = dortalign)
     ## Parse raw data
     if(verbose) {
         message("[bakedpi] Reading data")
     }
-    out <- readRawDataAsDataTable(obj = obj, mzsubset = mzsubset, verbose = subverbose)
-    obj <- out$obj
-    DT <- out$DT
+    obj <- readRawDataAsDataTable(obj = obj, mzsubset = mzsubset, verbose = subverbose)
 
     if(verbose) {
         message("[bakedpi] Background correction")
     }
-    out <- backgroundCorrection(obj = obj, DT = DT, verbose = subverbose)
-    obj <- out$obj
-    DTbgcorr <- out$DTbgcorr
-    rm(out)
+    obj <- backgroundCorrection(obj = obj, verbose = subverbose)
 
     if (dortalign) {
-        out <- rtAlignment(obj = obj, DT = DT, DTbgcorr = DTbgcorr, verbose = subverbose)
-        obj <- out$obj
-        DT <- out$DT
-        DTbgcorr <- out$DTbgcorr
+        obj <- rtAlignment(obj = obj, verbose = subverbose)
     }
 
     if(verbose) {
         message("[bakedpi] Density estimation")
     }
-    dmat <- densityEstimation(obj = obj, DTbgcorr = DTbgcorr, dbandwidth = dbandwidth,
+    dmat <- densityEstimation(obj = obj, dbandwidth = dbandwidth,
                               dgridstep = dgridstep, outfileDens = outfileDens,
                               verbose = subverbose)$dmat
     obj@dens <- dmat
@@ -639,8 +645,7 @@ bakedpi <- function(files, classes, dbandwidth = c(0.005, 10),
     if(verbose) {
         message("[bakedpi] Computing cutoff")
     }
-    cutoff <- getCutoff(obj = obj, densmat = dmat, by = 2, 
-                        DTbgcorr = DTbgcorr, verbose = subverbose)
+    cutoff <- getCutoff(obj = obj, densmat = dmat, by = 2, verbose = subverbose)
     qs <- seq(0,1,0.001)
     obj@densquants <- quantile(dmat[dmat!=0], qs)
     qcutoff <- which.min(abs(cutoff-obj@densquants))
@@ -656,9 +661,9 @@ bakedpi <- function(files, classes, dbandwidth = c(0.005, 10),
         message("[bakedpi] Quantifying")
     }
     if (dortalign) {
-        obj <- getXICsAndQuantifyWithRetentionTime(obj = obj, DT = DT, verbose = subverbose)
+        obj <- getXICsAndQuantifyWithRetentionTime(obj = obj, verbose = subverbose)
     } else {
-        obj <- getXICsAndQuantifyWithoutRetentionTime(obj = obj, DT = DT, verbose = subverbose)
+        obj <- getXICsAndQuantifyWithoutRetentionTime(obj = obj, verbose = subverbose)
     }
     
     ## Differential analysis

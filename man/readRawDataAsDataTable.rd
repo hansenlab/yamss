@@ -13,8 +13,8 @@ process. \code{NULL} otherwise.}
 \item{verbose}{Should the function be verbose?}
 }
 \value{
-A list with elements \code{obj} and \code{DT} containing the updated "cms"
-  object and \code{data.table} of M/Z, scan, intensity, and sample information.
+An updated "cms" object with a \code{data.table} of M/Z, scan, intensity, 
+  and sample information.
 }
 \description{
 Reads raw .mzdata and .cdf files and stores the data in both a list within the 
