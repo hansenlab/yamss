@@ -11,7 +11,8 @@ Depends:
     methods,
     BiocGenerics (>= 0.15.3),
     ProtGenerics,
-    limma
+    limma,
+    data.table
 Suggests:
     BiocStyle,
     knitr,
@@ -23,7 +24,6 @@ Imports:
     S4Vectors,
     EBImage,
     Matrix,
-    data.table,
     mzR,
     graphics,
     grDevices

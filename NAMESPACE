@@ -1,5 +1,6 @@
 import(methods)
 import(BiocGenerics)
+import(data.table)
 importFrom(ProtGenerics, intensity, mz)
 importMethodsFrom(S4Vectors, colSums, complete.cases, head, tail)
 
@@ -27,7 +28,7 @@ importFrom(IRanges, IRanges, whichAsIRanges)
 importMethodsFrom(IRanges, as.matrix, cor, diff, ifelse,
                   quantile, shift)
 
-importFrom(data.table, ":=", ".N", CJ, data.table, rbindlist, setkey)
+
 importFrom(EBImage, bwlabel)
 importFrom(limma, eBayes, lmFit, topTable)
 
