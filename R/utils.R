@@ -1,4 +1,5 @@
 utils::globalVariables(c("blobnum", "mzmin", "mzmax", "weight", "bg", "gmz",
+                         "mz", "intensity",
                          "xic", "scanmax", "scanmin", "scanorig", "N", "."))
 
 

@@ -16,7 +16,8 @@ setClass("CMS",
                    peakQuants = "matrix")
          )
 
-setMethod("show", function(object) {
+setMethod("show", signature(object = "CMS"),
+          function(object) {
 })
 
 getFileNames <- function(obj) {

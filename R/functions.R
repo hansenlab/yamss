@@ -62,7 +62,8 @@ diffrep <- function(cms, classes) {
     design <- model.matrix(~classes, data = df)
     fit <- lmFit(log2(quants + 1), design = design)
     fit <- eBayes(fit)
-    return(topTable(fit, coef = 2, number = Inf, sort.by = "P"))
+    out <- topTable(fit, coef = 2, number = Inf, sort.by = "P")
+    out
 }
 
 plotDensityRegion <- function(cms, mzrange, scanrange) {

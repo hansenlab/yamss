@@ -10,7 +10,6 @@ Authors@R: c(
 Depends:
     methods,
     BiocGenerics (>= 0.15.3),
-    ProtGenerics,
     limma
 Suggests:
     BiocStyle,

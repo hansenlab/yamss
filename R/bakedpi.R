@@ -178,7 +178,7 @@ rtAlignment <- function(obj, verbose = FALSE) {
         message("[rtAlignment] Get XICs for these regions")
     }
     ptime1 <- proc.time()
-    xics <- getAllXics(mzranges = irmzr, DT = DT)
+    xics <- getAllXics(cms = obj, mzranges = irmzr)
     scans <- 1:obj@mzParams$maxScan
     xicsImputed <- lapply(xics, function(x) {
         do.call(cbind, lapply(1:ncol(x), function(col) {
@@ -554,8 +554,8 @@ getXICsAndQuantifyWithoutRetentionTime <- function(obj, verbose = FALSE) {
     mzParams <- obj@mzParams
     DT <- obj@rawPeakDT
     ptime1 <- proc.time()
-    obj@xicsRaw <- getAllXics(mzranges = IRanges(start = as.integer(obj@peakBounds[,"mzmin"]*1e5),
-                                                 end = as.integer(obj@peakBounds[,"mzmax"]*1e5)), DT = DT)
+    obj@xicsRaw <- getAllXics(cms = obj, mzranges = IRanges(start = as.integer(obj@peakBounds[,"mzmin"]*1e5),
+                                                            end = as.integer(obj@peakBounds[,"mzmax"]*1e5)))
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) {

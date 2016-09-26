@@ -1,6 +1,5 @@
 import(methods)
 import(BiocGenerics)
-importFrom(ProtGenerics, intensity, mz)
 importMethodsFrom(S4Vectors, colSums, complete.cases, head, tail)
 
 ## Mass spec stuff
@@ -35,4 +34,5 @@ importFrom(limma, eBayes, lmFit, topTable)
 export(getPeakInfo, getTIC, getAllXics, bakedpi, diffrep)
 export(plotDensityRegion, updatePeaks)
 export(getFileNames, densityEstimate, densityCutoff, densityQuantiles, peakBounds, peakQuants)
-exportClass("CMS")
+exportClasses("CMS")
+exportMethods(show)

@@ -62,6 +62,7 @@ Let's look at the peak bound information for the peaks with the strongest differ
 
 ```{r}
 topPeaks <- as.numeric(rownames(dr)[1:10])
+topPeaks
 ```
 
 We can access the peak bound information with `peakBounds` and select the rows corresponding to `topPeaks`.

@@ -8,6 +8,7 @@
 \alias{densityQuantiles}
 \alias{peakBounds}
 \alias{peakQuants}
+\alias{show,CMS-method}
 \title{A class to hold mass spectrometry preprocessing information.}
 \description{
 This class transforms information from raw mass spectral files to a matrix
@@ -76,6 +77,14 @@ performed.
   }
 }
 
+\section{Utility functions}{
+  We have the following utility functions:
+
+  \describe{
+    \item{\code{show}:}{The show method; prints the object.}
+  }
+}
+
 \section{Accessors}{
   We have the following accessor functions:
 
@@ -90,11 +99,11 @@ performed.
 }
 
 \examples{
-quantMat <- matrix(rnorm(12*5000), nrow = 5000, ncol = 12)
+quants <- matrix(rnorm(12*5000), nrow = 5000, ncol = 12)
 bounds <- cbind(mzmin = seq(from = 100, to = 1100, length.out = 5000),
                 mzmax = seq(from = 100, to = 1100, length.out = 5000) + 0.1,
                 scan.min = rep(10,5000), scan.max = rep(20, 5000),
                 blobnum = 1:5000)
-cmsobj <- new("CMS", peakQuants = quantmat, peakBounds = bounds)
+cmsobj <- new("CMS", peakQuants = quants, peakBounds = bounds)
 head(peakQuants(cmsobj))
 }

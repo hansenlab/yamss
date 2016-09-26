@@ -5,12 +5,10 @@
 getAllXics(cms, mzranges)
 }
 \arguments{
+\item{cms}{An object of class \code{CMS}.}
 \item{mzranges}{A 2-column matrix where each row corresponds to one M/Z
 range and the first and second columns are the minimum and maximum
 M/Z values for the range respectively.}
-
-\item{DT}{A \code{data.table} (usually from \code{readRawDataAsDataTable})
-containing M/Z, scan, intensity, and sample information.}
 }
 \value{
 A list with length equal to the number of rows of \code{mzranges}
