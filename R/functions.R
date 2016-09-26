@@ -25,13 +25,14 @@ getTIC <- function(peak.info) {
     log2(sapply(peak.info, function(spec) { sum(spec[,2]) }) + 1)
 }
 
-getAllXics <- function(mzranges, DT) {
+getAllXics <- function(cms, mzranges) {
     ## Convert mzranges to an IRanges if a matrix
     if (class(mzranges) != "IRanges") {
         mzranges <- IRanges(start = as.integer(mzranges[,1]*1e5), 
             end = as.integer(mzranges[,2]*1e5))
     }
     ## Sort DT and get XICs
+    DT <- cms@rawPeakDT
     setkey(DT, mz, scan, sample)
     maxScan <- max(DT[,scan])
     numSamples <- length(unique(DT[,sample]))

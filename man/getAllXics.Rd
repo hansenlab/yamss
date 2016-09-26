@@ -2,7 +2,7 @@
 \alias{getAllXics}
 \title{Compute extracted ion chromatograms for multiple regions.}
 \usage{
-getAllXics(mzranges, DT)
+getAllXics(cms, mzranges)
 }
 \arguments{
 \item{mzranges}{A 2-column matrix where each row corresponds to one M/Z
@@ -25,15 +25,15 @@ In a given M/Z range, the maximum intensity observed in each scan gives the
 extracted ion chromatogram.
 }
 \examples{
+\dontrun{
 if (require(mtbls2)) {
 data(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")
-files <- list.files(filepath, recursive = TRUE, full.names = TRUE)[1:2]
-obj <- new("CMS", fileNames = files)
-## Parse raw data
-## obj <- readRawDataAsDataTable(obj = obj)
-## DT <- rawdataDT(obj)
-## mzranges <- rbind(c(455.09, 455.13), c(264, 264.04))
-## xicList <- getAllXics(mzranges, DT)
+files <- list.files(filepath, pattern = "MSpos-Ex1" recursive = TRUE, full.names = TRUE)
+classes <- rep(c("wild-type", "mutant"), each = 4)
+cmsobj <- bakedpi(files = files, classes = classes, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1), outfileDens = NULL, dortalign = TRUE, mzsubset = c(500, 520))
+mzranges <- rbind(c(500.01, 500.03), c(511.44, 511.46))
+xicList <- getAllXics(cmsobj, mzranges)
+}
 }
 }
