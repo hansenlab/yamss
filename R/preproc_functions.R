@@ -601,6 +601,8 @@ getXICsAndQuantifyWithoutRetentionTime <- function(obj, DT, verbose = FALSE) {
 bakedpi <- function(files, classes, dbandwidth = c(0.005, 10),
                     dgridstep = c(0.005, 1), outfileDens = NULL,
                     dortalign = FALSE, mzsubset = NULL, verbose = TRUE) {
+    ## Check that bandwidth is >= gridstep for binning purposes
+    stopifnot(sum(dbandwidth >= dgridstep)==2)
     subverbose <- max(as.integer(verbose) - 1L, 0)
     obj <- new("cms", files = files, classes = classes)
     ## Parse raw data
