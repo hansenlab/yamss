@@ -31,7 +31,7 @@ importFrom(limma, eBayes, lmFit, topTable)
 
 ## Export
 
-export(getPeakInfo, getTIC, getAllXics, bakedpi, diffrep)
+export(getPeakInfo, getTIC, getEICS, bakedpi, diffrep)
 export(plotDensityRegion, updatePeaks)
 export(getFileNames, densityEstimate, densityCutoff, densityQuantiles, peakBounds, peakQuants)
 exportClasses("CMS")
