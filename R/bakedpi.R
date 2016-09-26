@@ -649,9 +649,5 @@ bakedpi <- function(files, dbandwidth = c(0.005, 10),
         obj <- getXICsAndQuantifyWithoutRetentionTime(obj = obj, verbose = subverbose)
     }
     
-    ## Differential analysis
-    ## message("[bakedpi] Differential analysis")
-    ## diffrep <- getDiffTable(obj@peakQuants, classes)
-    ## obj@diffrep <- diffrep
     return(obj)
 }

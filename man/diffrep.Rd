@@ -23,7 +23,7 @@ uses empirical Bayes methods in the estimation of feature-wise variances.
 }
 \examples{
 quantmat <- matrix(rnorm(12*5000), nrow = 5000, ncol = 12)
-classes <- rep(c("case", "control"), each = 6)
 cmsobj <- new("CMS", peakQuants = quantmat)
+classes <- rep(c("case", "control"), each = 6)
 difftab <- diffrep(cmsobj, classes)
 }
