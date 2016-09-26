@@ -28,7 +28,8 @@ getTIC <- function(peak.info) {
 getAllXics <- function(mzranges, DT) {
     ## Convert mzranges to an IRanges if a matrix
     if (class(mzranges) != "IRanges") {
-        mzranges <- IRanges(start = as.integer(mzranges[,1]*1e5), end = as.integer(mzranges[,2]*1e5))
+        mzranges <- IRanges(start = as.integer(mzranges[,1]*1e5), 
+            end = as.integer(mzranges[,2]*1e5))
     }
     ## Sort DT and get XICs
     setkey(DT, mz, scan, sample)
@@ -59,4 +60,16 @@ getDiffTable <- function(quants, classes) {
     fit <- lmFit(log2(quants + 1), design = design)
     fit <- eBayes(fit)
     return(topTable(fit, coef = 2, number = Inf, sort.by = "P"))
+}
+
+plotDensityRegion <- function(obj, mzrange, scanrange) {
+    mzs <- as.numeric(rownames(obj@dens))
+    scans <- as.numeric(colnames(obj@dens))
+    idxMZ <- which.min(abs(mzrange[1]-mzs)):which.min(abs(mzrange[2]-mzs))
+    idxScan <- which.min(abs(scanrange[1]-scans)):which.min(abs(scanrange[2]-scans))
+    subdensmat <- obj@dens[idxMZ, idxScan]
+
+    mypalette <- colorRampPalette(c("white", "palegoldenrod", "palegreen", "#99ccff", "#ff9999", "red"))
+    colorsdens <- c(rep("white", 890), mypalette(110))
+    image(z = t(subdensmat), x = scanrange[1]:scanrange[2], y = mzs[idxMZ], col = colorsdens, breaks = obj@densquants, xlab = "Scan", ylab = "M/Z", main = paste0("M/Z: ", mzrange[1], " - ", mzrange[2], ". Scans: ", scanrange[1], " - ", scanrange[2]))
 }

@@ -23,7 +23,9 @@ Imports:
     EBImage,
     Matrix,
     data.table,
-    mzR
+    mzR,
+    graphics,
+    grDevices
 VignetteBuilder: knitr
 License: Artistic-2.0
 biocViews: MassSpectrometry, Metabolomics, Software
