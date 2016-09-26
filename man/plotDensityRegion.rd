@@ -19,7 +19,6 @@ M/Z and scan region.
 \examples{
 ## For illustration purposes, we make a "dummy" object
 ## with a random matrix as the density estimate
-
 # FIXME
 #densmat <- matrix(rnorm(600), nrow = 20, ncol = 30)
 #colnames(densmat) <- 1:ncol(densmat)

@@ -40,7 +40,7 @@ classes <- rep(c("wild-type", "mutant"), each = 4)
 
 All that is needed to process these raw mass spectral data files is the `bakedpi` function. The `dbandwidth` and `dgridstep` arguments influence the bivariate kernel density estimation. `dgridstep` is a vector of length 2 that specifies the spacing of the grid upon which the density is estimated. The first component specifies the spacing in the M/Z direction, and the second component specifies the spacing in the scan (retention time) direction. In order to showcase a fast example, we have specified the M/Z and scan spacings to be `0.01` and `1` respectively, but we recommend keeping the defaults of `0.005` and `1` because this will more accurately define the M/Z and scan bounds of the detected peaks. `dbandwidth` is a vector of length 2 that specifies the kernel density bandwidth in the M/Z and scan directions in the first and second components respectively. Note that `dbandwidth[1]` should be greater than or equal to `dgridstep[1]` and `dbandwidth[2]` should be greater than or equal to `dgridstep[2]`. Because a binning strategy is used to speed up computation of the density estimate, this is to ensure that data points falling into the same grid location all have the same distances associated with them.
 
-For experiments with a wide range of M/Z values or several thousands of scans, the computation of the density estimate can be time-intensive. For this reason, it can be useful to save the density estimate in an external file specified by the `outfileDens` argument. If `outfileDens` is set to `NULL`, then the density estimate is not saved and must be recomputed if you wish to process the data again. Specifying the filename of the saved density estimate in `outfileDens` when rerunning `bakedpi` skips the density estimation phase which can save a lot of time.
+For experiments with a wide range of M/Z values or several thousands of scans, the computation of the density estimate can be time-intensive. For this reason, it can be useful to save the density estimate in an external file specified by the `outfileDens` argument. If `outfileDens` is set to `NULL`, then the density estimate is not saved and must be recomputed if we wish to process the data again. Specifying the filename of the saved density estimate in `outfileDens` when rerunning `bakedpi` skips the density estimation phase which can save a lot of time.
 
 ```{r}
 cmsobj <- bakedpi(files = files, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
@@ -72,9 +72,6 @@ idx <- match(topPeaks, bounds[,"blobnum"])
 bounds[idx,]
 ```
 
-
-
-
 # Information contained in a CMS object
 
 In addition to differential analysis results, `CMS` objects contain information useful in exploring your data.
@@ -94,6 +91,22 @@ mzrange <- bounds[idx[1], c("mzmin", "mzmax")]
 scanrange <- bounds[idx[1], c("scan.min", "scan.max")]
 plotDensityRegion(cmsobj, mzrange = mzrange, scanrange = scanrange)
 ```
+
+Peaks are called by thresholding the density estimate. If we wish to investigate the impact of varying this cutoff, we can use `densityCutoff` to obtain the original cutoff and `updatePeaks` to re-call peaks and quantify them. Quantiles of the non-zero density values are also available via `densityQuantiles`.
+
+```{r}
+cmsobj2 <- updatePeaks(cmsobj, densityCutoff(cmsobj)*0.99)
+dqs <- densityQuantiles(cmsobj)
+dqs
+cmsobj3 <- updatePeaks(cmsobj, dqs["98.5%"])
+nrow(peakBounds(cmsobj)) # Number of peaks detected - original
+nrow(peakBounds(cmsobj2)) # Number of peaks detected - updated
+nrow(peakBounds(cmsobj3)) # Number of peaks detected - updated
+```
+
+## Raw data
+
+The raw spectral data from the experiment is available in a `cms` object in a few formats. 
 
 # Sessioninfo
 
