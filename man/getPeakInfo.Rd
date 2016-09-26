@@ -28,4 +28,3 @@ files <- files[c(1,2)]
 pinfo <- getPeakInfo(files)
 }
 }
-

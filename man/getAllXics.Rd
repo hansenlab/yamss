@@ -37,4 +37,3 @@ mzranges <- rbind(c(455.09, 455.13), c(264, 264.04))
 xicList <- getAllXics(mzranges, DT)
 }
 }
-

@@ -27,4 +27,3 @@ quantmat <- matrix(rnorm(12*5000), nrow = 5000, ncol = 12)
 classes <- rep(c("case", "control"), each = 6)
 difftab <- getDiffTable(quantmat, classes)
 }
-

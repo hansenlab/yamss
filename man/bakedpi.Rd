@@ -43,14 +43,12 @@ quantified and run through a differential analysis pipeline.
 }
 \examples{
 \dontrun{
-if (require(mtbls2) & require(yamss)) {
+if (require(mtbls2)) {
 data(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")
-files <- list.files(filepath, recursive = TRUE, full.names = TRUE)
-files <- files[c(1,2,5,6)]
-classes <- rep(c("wild-type", "mutant"), each = 2)
-cmsobj <- bakedpi(files = files, classes = classes, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1), outfileDens = NULL, dortalign = TRUE)
+files <- list.files(filepath, pattern = "MSpos-Ex1" recursive = TRUE, full.names = TRUE)
+classes <- rep(c("wild-type", "mutant"), each = 4)
+cmsobj <- bakedpi(files = files, classes = classes, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1), outfileDens = NULL, dortalign = TRUE, mzsubset = c(500, 520))
 }
 }
 }
-

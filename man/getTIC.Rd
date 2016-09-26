@@ -25,4 +25,3 @@ pinfo <- getPeakInfo(file)
 tic <- getTIC(pinfo[[1]])
 }
 }
-
