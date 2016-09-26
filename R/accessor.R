@@ -1,43 +1,41 @@
-files <- function(obj) {
-    obj@files
-}
+setClass("CMS",
+         slots = c(fileNames = "character",
+                   rtalign = "logical",
+                   rawPeakInfo = "list",
+                   rawPeakDT = "data.frame",
+                   bgcorrDT = "data.frame",
+                   mzParams = "list",
+                   bgSmooths = "list",
+                   density = "matrix",
+                   densityCutoff = "numeric",
+                   densityQuants = "numeric",
+                   alignments = "list",
+                   xicsRaw = "list",
+                   xicsImputed = "list",
+                   peakBounds = "matrix",
+                   peakQuants = "matrix")
+         )
 
-classes <- function(obj) {
-    obj@classes
-}
-
-rawpeakinfo <- function(obj) {
-    obj@rawpeakinfo
-}
-
-rawdataDT <- function(obj) {
-	obj@DT
-}
-
-bgcorrdataDT <- function(obj) {
-	obj@DTbgcorr
+getFileNames <- function(obj) {
+    obj@fileNames
 }
 
 densityEstimate <- function(obj) {
-    obj@dens
+    obj@density
 }
 
 densityCutoff <- function(obj) {
-    obj@dcutoff
+    obj@densityCutoff
 }
 
 densityQuantiles <- function(obj) {
-    obj@densquants
+    obj@densityQuants
 }
 
 peakBounds <- function(obj) {
-    obj@blobs
+    obj@peakBounds
 }
 
 peakQuants <- function(obj) {
-    obj@quants
-}
-
-diffrep <- function(obj) {
-    obj@diffrep
+    obj@peakQuants
 }

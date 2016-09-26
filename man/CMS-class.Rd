@@ -1,7 +1,7 @@
 \name{CMS-class}
 \docType{class}
 \alias{CMS-class}
-\alias{files}
+\alias{getFileNames}
 \alias{getRawPeakInfo}
 \alias{densityEstimate}
 \alias{densityCutoff}
@@ -20,60 +20,58 @@ performed.
 
 \section{Slots}{
   \describe{
-    \item{\code{files}:}{
-      a character vector of filepaths to the raw data
+    \item{\code{fileNames}:}{
+      a character vector of filepaths to the raw data.
     }
-    \item{\code{classes}:}{
-      was retention time alignment performed?
+    \item{\code{rtalign}:}{FIXME}
+    \item{\code{rawPeakInfo}:}{
+      a list of raw spectral information for each scan in each sample.
     }
-    \item{\code{rawpeakinfo}:}{
-      a list of raw spectral information for each scan in each sample
+    \item{\code{rawPeakDT}:}{
+      a \code{data.table} of raw spectral information.
     }
-    \item{\code{DT}:}{
-      a \code{data.table} of raw spectral information
-    }
-    \item{\code{DTbgcorr}:}{
-      a \code{data.table} of background-corrected spectral information
+    \item{\code{bgcorrDT}:}{
+      a \code{data.table} of background-corrected spectral information.
     }
     \item{\code{mzParams}:}{
       a list containing the minimum and maximum M/Z value and number of 
-      scans in each sample
+      scans in each sample.
     }
-    \item{\code{bgsmooths}:}{
+    \item{\code{bgSmooths}:}{
       a list containing M/Z region-specific smoothed background trends as 
-      a function of scan for each sample
+      a function of scan for each sample.
     }
-    \item{\code{dens}:}{
+    \item{\code{density}:}{
       a matrix with rows corresponding to M/Z values and columns 
-      corresponding to scans containing the kernel density estimate
+      corresponding to scans containing the kernel density estimate.
     }
-    \item{\code{dcutoff}:}{
-      the density cutoff value used to determine peak regions
+    \item{\code{densityCutoff}:}{
+      the density cutoff value used to determine peak regions.
     }
-    \item{\code{densquants}:}{
+    \item{\code{densityQuants}:}{
       a numeric vector containing the quantiles of the nonzero density 
-      values
+      values.
     }
     \item{\code{alignments}:}{
       a list of shifts for each sample in several M/Z regions that 
       maximizes the correlation between the extracted ion chromatograms 
-      in those regions
-    }
-    \item{\code{blobs}:}{
-      a matrix of information about the peaks (high density "blobs") 
-      detected: M/Z bounds, scan bounds, and ID number ("blobnum")
+      in those regions.
     }
     \item{\code{xicsRaw}:}{
       a list of extracted ion chromatograms corresponding to each peak 
-      for each sample
+      for each sample.
     }
     \item{\code{xicsImputed}:}{
       a list of interpolated XICs used for quantification. This is only 
-      computed when retention time alignment isn't performed
+      computed when retention time alignment is not performed.
     }
-    \item{\code{quants}:}{
+    \item{\code{peakBounds}:}{
+      a matrix of information about the detected peaks : M/Z bounds,
+      scan bounds, and ID number (\dQuote{blobnum}).
+    }
+    \item{\code{peakQuants}:}{
       a matrix of quantifications where rows correspond to peaks and 
-      columns correspond to samples
+      columns correspond to samples.
     }
   }
 }
@@ -82,14 +80,11 @@ performed.
   We have the following accessor functions:
 
   \describe{
-    \item{\code{files}}{}
-    \item{\code{getRawPeakInfo
-}}{}
-    \item{\code{densityEstimate}}{}
-    \item{\code{densityCutoff}}{}
-    \item{\code{densityQuantiles}}{}
-    \item{\code{peakBounds
-}}{}
-    \item{\code{peakQuants}}{}
+    \item{\code{getFileNames}:}{FIXME}
+    \item{\code{densityEstimate}:}{FIXME}
+    \item{\code{densityCutoff}:}{FIXME}
+    \item{\code{densityQuantiles}:}{FIXME}
+    \item{\code{peakBounds}:}{FIXME}
+    \item{\code{peakQuants}:}{FIXME}
   }
 }

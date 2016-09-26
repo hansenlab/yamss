@@ -1,22 +1,3 @@
-setClass("cms",
-    slots = c(files = "character",
-        classes = "character",
-        rtalign = "logical",
-        rawpeakinfo = "list",
-        DT = "data.frame",
-        DTbgcorr = "data.frame",
-        mzParams = "list",
-        bgsmooths = "list",
-        dens = "matrix",
-        dcutoff = "numeric",
-        densquants = "numeric",
-        alignments = "list",
-        blobs = "matrix",
-        xicsRaw = "list",
-        xicsImputed = "list",
-        quants = "matrix",
-        diffrep = "data.frame")
-    )
 
 ## Steps
 ## 1. Read raw data
@@ -31,13 +12,13 @@ setClass("cms",
 
 readRawDataAsDataTable <- function(obj, mzsubset = NULL, verbose = FALSE) {
     if(verbose) {
-        message(sprintf("[readRawDataAsDataTable]: Reading %i files", length(obj@files)))
+        message(sprintf("[readRawDataAsDataTable]: Reading %i files", length(obj@fileNames)))
     }
-    obj@rawpeakinfo <- getPeakInfo(obj@files)
+    obj@rawPeakInfo <- getPeakInfo(obj@fileNames)
     ## Make raw data matrix and data.table
-    rawdatamat <- do.call(rbind, lapply(seq_along(obj@rawpeakinfo), function(s) {
-                                     cbind(do.call(rbind, lapply(seq_along(obj@rawpeakinfo[[s]]), function(scan) {
-                                                              cbind(obj@rawpeakinfo[[s]][[scan]], scan)
+    rawdatamat <- do.call(rbind, lapply(seq_along(obj@rawPeakInfo), function(s) {
+                                     cbind(do.call(rbind, lapply(seq_along(obj@rawPeakInfo[[s]]), function(scan) {
+                                                              cbind(obj@rawPeakInfo[[s]][[scan]], scan)
                                                           })), s)
                                  }))
     colnames(rawdatamat) <- c("mz", "intensity", "scan", "sample")
@@ -56,13 +37,13 @@ readRawDataAsDataTable <- function(obj, mzsubset = NULL, verbose = FALSE) {
     obj@mzParams <- list(maxScan = max(DT[,scan]),
                          maxMZ = 10*ceiling(max(DT[,mz])/1e5/10),
                          minMZ = 10*floor(min(DT[,mz])/1e5/10))
-    obj@DT <- DT
+    obj@rawPeakDT <- DT
     return(obj)
 }
 
 backgroundCorrection <- function(obj, verbose = FALSE) {
     mzParams <- obj@mzParams
-    DT <- obj@DT
+    DT <- obj@rawPeakDT
     setkey(DT, mz, scan, sample)
     mzbreaks <- c(seq(mzParams$minMZ, mzParams$maxMZ, 10), mzParams$maxMZ)
     scanbreaks <- seq(1, mzParams$maxScan, 40)
@@ -76,7 +57,7 @@ backgroundCorrection <- function(obj, verbose = FALSE) {
         DTmz <- DT[.(mzseq), nomatch = 0]
         lapply(1:(length(scanbreaks)-1), function(rt) {
             DTmzscan <- DTmz[scan %in% scanbreaks[rt]:scanbreaks[rt+1]]
-            lapply(seq_along(obj@files), function(s) {
+            lapply(seq_along(obj@fileNames), function(s) {
                 logintens <- log2(DTmzscan[sample==s, intensity] + 1)
                 if (length(logintens) < 10)
                     return(NA)
@@ -94,7 +75,7 @@ backgroundCorrection <- function(obj, verbose = FALSE) {
     r <- dnorm(bgsd)/dnorm(0)
     bgmeans <- lapply(1:(length(mzbreaks)-1), function(m) {
         lapply(1:(length(scanbreaks)-1), function(rt) {
-            lapply(seq_along(obj@files), function(s) {
+            lapply(seq_along(obj@fileNames), function(s) {
                 dens <- densGrid[[m]][[rt]][[s]]
                 if (class(dens)=="density") {
                     indexFirstPeak <- which.max(diff(dens$y) < 0)
@@ -110,7 +91,7 @@ backgroundCorrection <- function(obj, verbose = FALSE) {
         message("[backgroundCorrection] get region-specific background trends")
     }
     ptime1 <- proc.time()
-    smooths <- lapply(seq_along(obj@files), function(s) {
+    smooths <- lapply(seq_along(obj@fileNames), function(s) {
         ## rows = scans, cols = M/Z bins
         ## Each col is the background trend across scans for a particular M/Z region
         bgmeanmatThisSample <- do.call(cbind, lapply(bgmeans, function(mzList) {
@@ -138,7 +119,7 @@ backgroundCorrection <- function(obj, verbose = FALSE) {
     if(verbose) {
         message(sprintf("[backgroundCorrection]  .. done in %.1f secs.", stime))
     }
-    obj@bgsmooths <- smooths
+    obj@bgSmooths <- smooths
 
     ## Perform background correction
     setkey(DT, mz, sample)
@@ -146,7 +127,7 @@ backgroundCorrection <- function(obj, verbose = FALSE) {
         message("[backgroundCorrection] correct intensities")
     }
     ptime1 <- proc.time()
-    DTbgcorr <- rbindlist(lapply(seq_along(obj@files), function(s) {
+    DTbgcorr <- rbindlist(lapply(seq_along(obj@fileNames), function(s) {
         bgmeanmatSmoothed <- smooths[[s]]
         mzbounds <- attr(bgmeanmatSmoothed, "mzbounds")
         rbindlist(lapply(1:nrow(mzbounds), function(i) {
@@ -164,14 +145,14 @@ backgroundCorrection <- function(obj, verbose = FALSE) {
     if(verbose) {
         message(sprintf("[backgroundCorrection]  .. done in %.1f secs.", stime))
     }
-    obj@DTbgcorr <- DTbgcorr
+    obj@bgcorrDT <- DTbgcorr
     return(obj)
 }
 
 rtAlignment <- function(obj, verbose = FALSE) {
     mzParams <- obj@mzParams
-    DT <- obj@DT
-    DTbgcorr <- obj@DTbgcorr
+    DT <- obj@rawPeakDT
+    DTbgcorr <- obj@bgcorrDT
     if(verbose) {
         message("[rtAlignment] Get rough M/Z regions to align")
     }
@@ -221,7 +202,7 @@ rtAlignment <- function(obj, verbose = FALSE) {
         xicmat <- xics[[i]]
         xicimpmat <- xicsImputed[[i]]
         refsamp <- which.max(colSums(xicmat))
-        bestShiftBySample <- sapply(seq_along(obj@files), function(s) {
+        bestShiftBySample <- sapply(seq_along(obj@fileNames), function(s) {
             if (s==refsamp) {
                 return(0)
             }
@@ -257,7 +238,7 @@ rtAlignment <- function(obj, verbose = FALSE) {
     setkey(DT, mz, sample)
     for (i in seq_along(irmzr)) {
         mzseq <- seq(start(irmzr[i]), end(irmzr[i]))
-        for (s in seq_along(obj@files)) {
+        for (s in seq_along(obj@fileNames)) {
             DT[CJ(mzseq,s), shift := shiftsList[[i]][s], nomatch = 0]
             DTbgcorr[CJ(mzseq,s), shift := shiftsList[[i]][s], nomatch = 0]
         }
@@ -275,14 +256,14 @@ rtAlignment <- function(obj, verbose = FALSE) {
     if(verbose) {
         message(sprintf(".. done in %.1f secs.", stime))
     }
-    obj@DT <- DT
-    obj@DTbgcorr <- DTbgcorr
+    obj@rawPeakDT <- DT
+    obj@bgcorrDT <- DTbgcorr
     return(obj)
 }
 
 densityEstimation <- function(obj, dgridstep = dgridstep, dbandwidth = dbandwidth, 
                               outfileDens, verbose = FALSE) {
-    DTbgcorr <- obj@DTbgcorr
+    DTbgcorr <- obj@bgcorrDT
     getDensityEstimateApprox <- function(DTbgcorr, bw = dbandwidth,
                                          gridstep = dgridstep, maxbws = 4, mzParams) {
         gridseqMz <- seq(mzParams$minMZ, mzParams$maxMZ, gridstep[1])
@@ -420,7 +401,7 @@ getCutoff <- function(obj, densmat, by = 2, verbose = FALSE) {
     }
     ptime1 <- proc.time()
     mzParams <- obj@mzParams
-    DTbgcorr <- obj@DTbgcorr
+    DTbgcorr <- obj@bgcorrDT
     mzregions <- seq(mzParams$minMZ, mzParams$maxMZ, by)
     setkey(DTbgcorr, mz)
     densmatMzs <- as.numeric(rownames(densmat))
@@ -443,7 +424,7 @@ getCutoff <- function(obj, densmat, by = 2, verbose = FALSE) {
         mzseq <- seq(as.integer(mzwindow[1]*1e5), as.integer(mzwindow[2]*1e5))
         subdt <- DTbgcorr[.(mzseq), nomatch = 0][scan >= scanwindow[1] & scan <= scanwindow[2]]
         ## Skip if number of points in region isn't >= number of samples
-        if (nrow(subdt) < length(obj@files))
+        if (nrow(subdt) < length(obj@fileNames))
             return(c())
         ## Get the M/Z range of this rough "peak"
         dens <- density(subdt[,mz]/1e5)
@@ -522,16 +503,16 @@ getXICsAndQuantifyWithRetentionTime <- function(obj, verbose = FALSE) {
         message("[getXICsAndQuantifyWithRetentionTime] compute XICs")
     }
     mzParams <- obj@mzParams
-    DT <- obj@DT
+    DT <- obj@rawPeakDT
     setkey(DT, mz, scan)
     ptime1 <- proc.time()
-    obj@xicsRaw <- lapply(1:nrow(obj@blobs), function(i) {
-        mzseq <- seq(as.integer(obj@blobs[i,"mzmin"]*1e5), as.integer(obj@blobs[i,"mzmax"]*1e5))
+    obj@xicsRaw <- lapply(1:nrow(obj@peakBounds), function(i) {
+        mzseq <- seq(as.integer(obj@peakBounds[i,"mzmin"]*1e5), as.integer(obj@peakBounds[i,"mzmax"]*1e5))
         dt <- DT[.(mzseq), nomatch = 0]
         dt <- dt[, xic := log2(max(intensity)+1), by = .(scan, sample)]
         dup <- duplicated(dt[,.(scan,sample)])
         dt <- dt[!dup]
-        xics <- lapply(seq_along(obj@files), function(s) {
+        xics <- lapply(seq_along(obj@fileNames), function(s) {
             subdt <- dt[sample==s]
             if (nrow(subdt) < 2) {
                 return(approxfun(x = 1:2, y = rep(0,2), rule = 2))
@@ -551,7 +532,7 @@ getXICsAndQuantifyWithRetentionTime <- function(obj, verbose = FALSE) {
     scanseq <- seq(0, mzParams$maxScan, scanstep)
     ptime1 <- proc.time()
     quantmat <- do.call(rbind, lapply(seq_along(obj@xicsRaw), function(i) {
-                                   wh <- which.min(abs(scanseq-obj@blobs[i,"scan.min"])):which.min(abs(scanseq-obj@blobs[i,"scan.max"]))
+                                   wh <- which.min(abs(scanseq-obj@peakBounds[i,"scan.min"])):which.min(abs(scanseq-obj@peakBounds[i,"scan.max"]))
                                    sapply(obj@xicsRaw[[i]], function(xic) {
                                        f <- (2^xic(scanseq))-1
                                        return(sum(f[wh])*scanstep)
@@ -562,7 +543,7 @@ getXICsAndQuantifyWithRetentionTime <- function(obj, verbose = FALSE) {
     if(verbose) {
         message(sprintf("[getXICsAndQuantifyWithRetentionTime]  .. done in %.1f secs.", stime))
     }
-    obj@quants <- quantmat
+    obj@peakQuants <- quantmat
     return(obj)
 }
 
@@ -571,10 +552,10 @@ getXICsAndQuantifyWithoutRetentionTime <- function(obj, verbose = FALSE) {
         message("[getXICsAndQuantifyWithoutRetentionTime] compute XICs")
     }
     mzParams <- obj@mzParams
-    DT <- obj@DT
+    DT <- obj@rawPeakDT
     ptime1 <- proc.time()
-    obj@xicsRaw <- getAllXics(mzranges = IRanges(start = as.integer(obj@blobs[,"mzmin"]*1e5),
-                                                 end = as.integer(obj@blobs[,"mzmax"]*1e5)), DT = DT)
+    obj@xicsRaw <- getAllXics(mzranges = IRanges(start = as.integer(obj@peakBounds[,"mzmin"]*1e5),
+                                                 end = as.integer(obj@peakBounds[,"mzmax"]*1e5)), DT = DT)
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) {
@@ -604,21 +585,23 @@ getXICsAndQuantifyWithoutRetentionTime <- function(obj, verbose = FALSE) {
         message("[getXICsAndQuantifyWithoutRetentionTime] quantify")
     }
     quantmat <- do.call(rbind, lapply(seq_along(obj@xicsImputed), function(i) {
-                                   mat <- obj@xicsImputed[[i]][obj@blobs[i, "scan.min"]:min(c(obj@blobs[i, "scan.max"], mzParams$maxScan)),,drop = FALSE]
+                                   mat <- obj@xicsImputed[[i]][obj@peakBounds[i, "scan.min"]:min(c(obj@peakBounds[i, "scan.max"], mzParams$maxScan)),,drop = FALSE]
                                    mat <- (2^mat)-1
                                    colSums(mat)
                                }))
-    obj@quants <- quantmat
+    obj@peakQuants <- quantmat
     return(obj)
 }
 
-bakedpi <- function(files, classes, dbandwidth = c(0.005, 10),
+bakedpi <- function(files, dbandwidth = c(0.005, 10),
                     dgridstep = c(0.005, 1), outfileDens = NULL,
                     dortalign = FALSE, mzsubset = NULL, verbose = TRUE) {
     ## Check that bandwidth is >= gridstep for binning purposes
     stopifnot(sum(dbandwidth >= dgridstep)==2)
+    .isArgumentTwoVector(dbandwidth)
+    .isArgumentTwoVector(dgridstep)
     subverbose <- max(as.integer(verbose) - 1L, 0)
-    obj <- new("cms", files = files, classes = classes, rtalign = dortalign)
+    obj <- new("CMS", fileNames = files, rtalign = dortalign)
     ## Parse raw data
     if(verbose) {
         message("[bakedpi] Reading data")
@@ -640,21 +623,21 @@ bakedpi <- function(files, classes, dbandwidth = c(0.005, 10),
     dmat <- densityEstimation(obj = obj, dbandwidth = dbandwidth,
                               dgridstep = dgridstep, outfileDens = outfileDens,
                               verbose = subverbose)$dmat
-    obj@dens <- dmat
+    obj@density <- dmat
 
     if(verbose) {
         message("[bakedpi] Computing cutoff")
     }
     cutoff <- getCutoff(obj = obj, densmat = dmat, by = 2, verbose = subverbose)
     qs <- seq(0,1,0.001)
-    obj@densquants <- quantile(dmat[dmat!=0], qs)
-    qcutoff <- which.min(abs(cutoff-obj@densquants))
+    obj@densityQuants <- quantile(dmat[dmat!=0], qs)
+    qcutoff <- which.min(abs(cutoff-obj@densityQuants))
     qref <- which.min(abs(qs-0.99))
-    obj@dcutoff <- max(cutoff, obj@densquants[qref])
+    obj@densityCutoff <- max(cutoff, obj@densityQuants[qref])
     if(verbose) {
         message("[bakedpi] Getting blobs")
     }
-    obj@blobs <- getBlobs(densmat = dmat, dcutoff = obj@dcutoff, verbose = subverbose)
+    obj@peakBounds <- getBlobs(densmat = dmat, dcutoff = obj@densityCutoff, verbose = subverbose)
 
     ## Get XICs and quantifications - methods differ if RT alignment was performed
     if(verbose) {
@@ -667,9 +650,8 @@ bakedpi <- function(files, classes, dbandwidth = c(0.005, 10),
     }
     
     ## Differential analysis
-    message("[bakedpi] Differential analysis")
-    diffrep <- getDiffTable(obj@quants, classes)
-    obj@diffrep <- diffrep
-
+    ## message("[bakedpi] Differential analysis")
+    ## diffrep <- getDiffTable(obj@peakQuants, classes)
+    ## obj@diffrep <- diffrep
     return(obj)
 }

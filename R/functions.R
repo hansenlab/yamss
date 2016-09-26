@@ -54,7 +54,9 @@ getAllXics <- function(mzranges, DT) {
     return(xics)
 }
 
-getDiffTable <- function(quants, classes) {
+diffrep <- function(cms, classes) {
+    stopifnot(is(cms, "CMS"))
+    quants <- cms@peakQuants
     df <- data.frame(classes = classes)
     design <- model.matrix(~classes, data = df)
     fit <- lmFit(log2(quants + 1), design = design)
@@ -62,31 +64,37 @@ getDiffTable <- function(quants, classes) {
     return(topTable(fit, coef = 2, number = Inf, sort.by = "P"))
 }
 
-plotDensityRegion <- function(obj, mzrange, scanrange) {
-    if (nrow(obj@dens)==0) {
-        stop("cms object must have a density estimate")
+plotDensityRegion <- function(cms, mzrange, scanrange) {
+    stopifnot(is(cms, "CMS"))
+    .isArgumentTwoVector(mzrange)
+    .isArgumentTwoVector(scanrange)
+    if (nrow(cms@density)==0) {
+        stop("'CMS' cmsect must have a density estimate")
     }
-    mzs <- as.numeric(rownames(obj@dens))
-    scans <- as.numeric(colnames(obj@dens))
+    mzs <- as.numeric(rownames(cms@density))
+    scans <- as.numeric(colnames(cms@density))
     idxMZ <- which.min(abs(mzrange[1]-mzs)):which.min(abs(mzrange[2]-mzs))
     idxScan <- which.min(abs(scanrange[1]-scans)):which.min(abs(scanrange[2]-scans))
-    subdensmat <- obj@dens[idxMZ, idxScan]
+    subdensmat <- cms@density[idxMZ, idxScan]
 
     mypalette <- colorRampPalette(c("white", "palegoldenrod", "palegreen", "#99ccff", "#ff9999", "red"))
     colorsdens <- c(rep("white", 890), mypalette(110))
-    image(z = t(subdensmat), x = scanrange[1]:scanrange[2], y = mzs[idxMZ], col = colorsdens, breaks = obj@densquants, xlab = "Scan", ylab = "M/Z", main = paste0("M/Z: ", mzrange[1], " - ", mzrange[2], ". Scans: ", scanrange[1], " - ", scanrange[2]))
+    image(z = t(subdensmat), x = scanrange[1]:scanrange[2], y = mzs[idxMZ], col = colorsdens,
+          breaks = cms@densityQuants, xlab = "Scan", ylab = "M/Z",
+          main = paste0("M/Z: ", mzrange[1], " - ", mzrange[2], ". Scans: ", scanrange[1], " - ", scanrange[2]))
 }
 
-updatePeaks <- function(obj, cutoff) {
-    if (nrow(obj@dens)==0) {
-        stop("cms object must have a density estimate")
+updatePeaks <- function(cms, cutoff) {
+    stopifnot(is(cms, "CMS"))
+    if (nrow(cms@density)==0) {
+        stop("cms cmsect must have a density estimate")
     }
-    newblobs <- getBlobs(obj@dens, dcutoff = cutoff, verbose = FALSE)
-    obj@blobs <- newblobs
-    if (obj@rtalign) {
-        obj <- getXICsAndQuantifyWithRetentionTime(obj = obj, verbose = FALSE)
+    newblobs <- getBlobs(cms@density, dcutoff = cutoff, verbose = FALSE)
+    cms@peakBounds <- newblobs
+    if (cms@rtalign) {
+        cms <- getXICsAndQuantifyWithRetentionTime(obj = cms, verbose = FALSE)
     } else {
-        obj <- getXICsAndQuantifyWithoutRetentionTime(obj = obj, verbose = FALSE)
+        cms <- getXICsAndQuantifyWithoutRetentionTime(obj = cms, verbose = FALSE)
     }
-    return(obj)
+    return(cms)
 }

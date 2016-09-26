@@ -2,13 +2,11 @@
 \alias{bakedpi}
 \title{Process raw data to obtain quantifications.}
 \usage{
-bakedpi(files, classes, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1),
+bakedpi(files, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1),
   outfileDens = NULL, dortalign = FALSE, mzsubset = NULL, verbose = TRUE)
 }
 \arguments{
 \item{files}{A character vector of filepaths to the raw data}
-
-\item{classes}{A character vector of class labels for the samples}
 
 \item{dbandwidth}{A length-2 vector indicating the kernel density bandwidth
 in the M/Z and retention time (scan) directions. Default: \code{c(0.005,10)}}
@@ -28,7 +26,7 @@ process. \code{NULL} otherwise.}
 \item{verbose}{Should the function be verbose?}
 }
 \value{
-An object of class "cms" containing preprocessing information.
+An object of class \code{CMS} containing preprocessing information.
 }
 \description{
 Performs background correction, retention time correction, peak detection,
