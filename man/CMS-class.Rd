@@ -24,7 +24,9 @@ performed.
     \item{\code{fileNames}:}{
       a character vector of filepaths to the raw data.
     }
-    \item{\code{rtalign}:}{FIXME}
+    \item{\code{rtalign}:}{
+      logical - was retention time alignment performed?
+    }
     \item{\code{rawPeakInfo}:}{
       a list of raw spectral information for each scan in each sample.
     }
@@ -89,12 +91,24 @@ performed.
   We have the following accessor functions:
 
   \describe{
-    \item{\code{getFileNames}:}{FIXME}
-    \item{\code{densityEstimate}:}{FIXME}
-    \item{\code{densityCutoff}:}{FIXME}
-    \item{\code{densityQuantiles}:}{FIXME}
-    \item{\code{peakBounds}:}{FIXME}
-    \item{\code{peakQuants}:}{FIXME}
+    \item{\code{getFileNames}:}{
+      gets filenames of raw data.
+    }
+    \item{\code{densityEstimate}:}{
+      gets the matrix containing the density estimate.
+    }
+    \item{\code{densityCutoff}:}{
+      gets the value used to threshold the density for peak calling.
+    }
+    \item{\code{densityQuantiles}:}{
+      gets the quantiles of the nonzero values in the density estimate.
+    }
+    \item{\code{peakBounds}:}{
+      gets the M/Z bounds, scan bounds, and ID numbers for detected peaks.
+    }
+    \item{\code{peakQuants}:}{
+      gets the matrix of peak quantifications (rows: peaks, columns: samples).
+    }
   }
 }
 
