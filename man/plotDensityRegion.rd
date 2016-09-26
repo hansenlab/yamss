@@ -23,5 +23,5 @@ densmat <- matrix(rnorm(600), nrow = 20, ncol = 30)
 colnames(densmat) <- 1:ncol(densmat)
 rownames(densmat) <- seq(350, by = 0.005, length.out = nrow(densmat))
 cmsobj <- new("cms", dens = densmat)
-plotDensityRegion(cmsobj, mzrange = c(350.01, 350.03))
+plotDensityRegion(cmsobj, mzrange = c(350.01, 350.03), scanrange = c(10,20))
 }
