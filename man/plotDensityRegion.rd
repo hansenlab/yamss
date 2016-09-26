@@ -19,10 +19,11 @@ M/Z and scan region.
 \examples{
 ## For illustration purposes, we make a "dummy" object
 ## with a random matrix as the density estimate
-# FIXME
-#densmat <- matrix(rnorm(600), nrow = 20, ncol = 30)
-#colnames(densmat) <- 1:ncol(densmat)
-#rownames(densmat) <- seq(350, by = 0.005, length.out = nrow(densmat))
-#cmsobj <- new("CMS", density = densmat)
-#plotDensityRegion(cmsobj, mzrange = c(350.01, 350.03), scanrange = c(10,20))
+
+densmat <- matrix(rnorm(600), nrow = 20, ncol = 30)
+colnames(densmat) <- 1:ncol(densmat)
+rownames(densmat) <- seq(350, by = 0.005, length.out = nrow(densmat))
+densityQuantiles <- quantile(densmat, seq(from = 0, to = 1, by = 0.01))
+cmsobj <- new("CMS", density = densmat, densityQuantiles = densityQuantiles)
+plotDensityRegion(cmsobj, mzrange = c(350.01, 350.03), scanrange = c(10,20))
 }

@@ -630,10 +630,10 @@ bakedpi <- function(files, dbandwidth = c(0.005, 10),
     }
     cutoff <- getCutoff(obj = obj, densmat = dmat, by = 2, verbose = subverbose)
     qs <- seq(0,1,0.001)
-    obj@densityQuants <- quantile(dmat[dmat!=0], qs)
-    qcutoff <- which.min(abs(cutoff-obj@densityQuants))
+    obj@densityQuantiles <- quantile(dmat[dmat!=0], qs)
+    qcutoff <- which.min(abs(cutoff-obj@densityQuantiles))
     qref <- which.min(abs(qs-0.99))
-    obj@densityCutoff <- max(cutoff, obj@densityQuants[qref])
+    obj@densityCutoff <- max(cutoff, obj@densityQuantiles[qref])
     if(verbose) {
         message("[bakedpi] Getting blobs")
     }

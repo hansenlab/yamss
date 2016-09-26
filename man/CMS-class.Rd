@@ -48,9 +48,9 @@ performed.
     \item{\code{densityCutoff}:}{
       the density cutoff value used to determine peak regions.
     }
-    \item{\code{densityQuants}:}{
-      a numeric vector containing the quantiles of the nonzero density 
-      values.
+    \item{\code{densityQuantiles}:}{
+      a numeric vector containing the 100 percent quantiles of the
+      nonzero density values.
     }
     \item{\code{alignments}:}{
       a list of shifts for each sample in several M/Z regions that 

@@ -8,13 +8,16 @@ setClass("CMS",
                    bgSmooths = "list",
                    density = "matrix",
                    densityCutoff = "numeric",
-                   densityQuants = "numeric",
+                   densityQuantiles = "numeric",
                    alignments = "list",
                    xicsRaw = "list",
                    xicsImputed = "list",
                    peakBounds = "matrix",
                    peakQuants = "matrix")
          )
+
+setMethod("show", function(object) {
+})
 
 getFileNames <- function(obj) {
     obj@fileNames
@@ -29,7 +32,7 @@ densityCutoff <- function(obj) {
 }
 
 densityQuantiles <- function(obj) {
-    obj@densityQuants
+    obj@densityQuantiles
 }
 
 peakBounds <- function(obj) {

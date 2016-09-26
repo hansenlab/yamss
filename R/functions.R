@@ -81,7 +81,7 @@ plotDensityRegion <- function(cms, mzrange, scanrange) {
     mypalette <- colorRampPalette(c("white", "palegoldenrod", "palegreen", "#99ccff", "#ff9999", "red"))
     colorsdens <- c(rep("white", 890), mypalette(110))
     image(z = t(subdensmat), x = scanrange[1]:scanrange[2], y = mzs[idxMZ], col = colorsdens,
-          breaks = cms@densityQuants, xlab = "Scan", ylab = "M/Z",
+          breaks = cms@densityQuantiles, xlab = "Scan", ylab = "M/Z",
           main = paste0("M/Z: ", mzrange[1], " - ", mzrange[2], ". Scans: ", scanrange[1], " - ", scanrange[2]))
 }
 
