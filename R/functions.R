@@ -73,3 +73,14 @@ plotDensityRegion <- function(obj, mzrange, scanrange) {
     colorsdens <- c(rep("white", 890), mypalette(110))
     image(z = t(subdensmat), x = scanrange[1]:scanrange[2], y = mzs[idxMZ], col = colorsdens, breaks = obj@densquants, xlab = "Scan", ylab = "M/Z", main = paste0("M/Z: ", mzrange[1], " - ", mzrange[2], ". Scans: ", scanrange[1], " - ", scanrange[2]))
 }
+
+updatePeaks <- function(obj, cutoff) {
+    newblobs <- getBlobs(obj@dens, dcutoff = cutoff, verbose = FALSE)
+    obj@blobs <- newblobs
+    if (obj@rtalign) {
+        obj <- getXICsAndQuantifyWithRetentionTime(obj = obj, verbose = FALSE)
+    } else {
+        obj <- getXICsAndQuantifyWithoutRetentionTime(obj = obj, verbose = FALSE)
+    }
+    return(obj)
+}
