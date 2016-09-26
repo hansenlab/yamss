@@ -27,5 +27,6 @@ Imports:
     grDevices
 VignetteBuilder: knitr
 License: Artistic-2.0
+URL: https://github.com/hansenlab/yamss
+BugReports: https://github.com/hansenlab/yamss/issues
 biocViews: MassSpectrometry, Metabolomics, Software
-RoxygenNote: 5.0.1
