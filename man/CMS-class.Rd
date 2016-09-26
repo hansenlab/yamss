@@ -60,12 +60,12 @@ performed.
       maximizes the correlation between the extracted ion chromatograms 
       in those regions.
     }
-    \item{\code{xicsRaw}:}{
-      a list of extracted ion chromatograms corresponding to each peak 
-      for each sample.
+    \item{\code{eicsRaw}:}{
+      a list of extracted ion chromatograms (EICs) corresponding to each 
+      peak for each sample.
     }
-    \item{\code{xicsImputed}:}{
-      a list of interpolated XICs used for quantification. This is only 
+    \item{\code{eicsImputed}:}{
+      a list of interpolated EICs used for quantification. This is only 
       computed when retention time alignment is not performed.
     }
     \item{\code{peakBounds}:}{
