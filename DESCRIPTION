@@ -13,6 +13,7 @@ Depends:
     ProtGenerics,
     limma
 Suggests:
+    BiocStyle,
     knitr,
     rmarkdown,
     mtbls2

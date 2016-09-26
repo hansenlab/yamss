@@ -12,9 +12,7 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 output: 
-  BiocStyle::pdf_document:
-    keep_tex: true
-    number_sections: false
+  BiocStyle::pdf_document
 ---
 
 # Introduction
