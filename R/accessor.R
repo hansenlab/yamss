@@ -10,8 +10,8 @@ setClass("CMS",
                    densityCutoff = "numeric",
                    densityQuantiles = "numeric",
                    alignments = "list",
-                   xicsRaw = "list",
-                   xicsImputed = "list",
+                   eicsRaw = "list",
+                   eicsImputed = "list",
                    peakBounds = "matrix",
                    peakQuants = "matrix")
          )

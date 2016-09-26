@@ -1,6 +1,6 @@
 utils::globalVariables(c("blobnum", "mzmin", "mzmax", "weight", "bg", "gmz",
                          "mz", "intensity",
-                         "xic", "scanmax", "scanmin", "scanorig", "N", "."))
+                         "eic", "scanmax", "scanmin", "scanorig", "N", "."))
 
 
 .isArgumentTwoVector <- function(vec) {

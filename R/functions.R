@@ -25,7 +25,7 @@ getTIC <- function(peak.info) {
     log2(sapply(peak.info, function(spec) { sum(spec[,2]) }) + 1)
 }
 
-getAllXics <- function(cms, mzranges) {
+getEICS <- function(cms, mzranges) {
     ## Convert mzranges to an IRanges if a matrix
     if (class(mzranges) != "IRanges") {
         mzranges <- IRanges(start = as.integer(mzranges[,1]*1e5), 
@@ -36,14 +36,14 @@ getAllXics <- function(cms, mzranges) {
     setkey(DT, mz, scan, sample)
     maxScan <- max(DT[,scan])
     numSamples <- length(unique(DT[,sample]))
-    xics <- lapply(1:length(mzranges), function(i) {
+    eics <- lapply(1:length(mzranges), function(i) {
         x <- DT[.(seq(start(mzranges[i]), end(mzranges[i]))), nomatch = 0]
         if (nrow(x)==0)
             return(matrix(0, nrow = maxScan, ncol = numSamples))
-        x <- x[, xic := log2(max(intensity)+1), by = .(scan, sample)]
+        x <- x[, eic := log2(max(intensity)+1), by = .(scan, sample)]
         dup <- duplicated(x[,.(scan,sample)])
         x <- x[!dup]
-        m <- as.matrix(sparseMatrix(i = x[,scan], j = x[,sample], x = x[,xic]))
+        m <- as.matrix(sparseMatrix(i = x[,scan], j = x[,sample], x = x[,eic]))
         if (nrow(m) < maxScan) {
             m <- rbind(m, matrix(0, nrow = maxScan-nrow(m), ncol = ncol(m)))
         }
@@ -52,7 +52,7 @@ getAllXics <- function(cms, mzranges) {
         }
         return(m)
     })
-    return(xics)
+    return(eics)
 }
 
 diffrep <- function(cms, classes) {

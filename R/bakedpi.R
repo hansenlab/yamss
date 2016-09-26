@@ -178,9 +178,9 @@ rtAlignment <- function(obj, verbose = FALSE) {
         message("[rtAlignment] Get XICs for these regions")
     }
     ptime1 <- proc.time()
-    xics <- getAllXics(cms = obj, mzranges = irmzr)
+    eics <- getEICS(cms = obj, mzranges = irmzr)
     scans <- 1:obj@mzParams$maxScan
-    xicsImputed <- lapply(xics, function(x) {
+    eicsImputed <- lapply(eics, function(x) {
         do.call(cbind, lapply(1:ncol(x), function(col) {
                            bool <- x[,col] > 1e-6
                            if (sum(bool) < 2)
@@ -199,23 +199,23 @@ rtAlignment <- function(obj, verbose = FALSE) {
     DTbgcorr[, scanorig := scan]
     DT[, scanorig := scan]
     shiftsList <- lapply(seq_along(irmzr), function(i) {
-        xicmat <- xics[[i]]
-        xicimpmat <- xicsImputed[[i]]
-        refsamp <- which.max(colSums(xicmat))
+        eicmat <- eics[[i]]
+        eicimpmat <- eicsImputed[[i]]
+        refsamp <- which.max(colSums(eicmat))
         bestShiftBySample <- sapply(seq_along(obj@fileNames), function(s) {
             if (s==refsamp) {
                 return(0)
             }
             corrShifts <- sapply(shifts, function(shift) {
                 if (shift < 0) {
-                    x <- tail(xicimpmat[,s], shift)
-                    ref <- head(xicimpmat[,refsamp], shift)
+                    x <- tail(eicimpmat[,s], shift)
+                    ref <- head(eicimpmat[,refsamp], shift)
                 } else if (shift==0) {
-                    x <- xicimpmat[,s]
-                    ref <- xicimpmat[,refsamp]
+                    x <- eicimpmat[,s]
+                    ref <- eicimpmat[,refsamp]
                 } else {
-                    x <- head(xicimpmat[,s], -shift)
-                    ref <- tail(xicimpmat[,refsamp], -shift)
+                    x <- head(eicimpmat[,s], -shift)
+                    ref <- tail(eicimpmat[,refsamp], -shift)
                 }
                 cor(x, ref)
             })
@@ -506,21 +506,21 @@ getXICsAndQuantifyWithRetentionTime <- function(obj, verbose = FALSE) {
     DT <- obj@rawPeakDT
     setkey(DT, mz, scan)
     ptime1 <- proc.time()
-    obj@xicsRaw <- lapply(1:nrow(obj@peakBounds), function(i) {
+    obj@eicsRaw <- lapply(1:nrow(obj@peakBounds), function(i) {
         mzseq <- seq(as.integer(obj@peakBounds[i,"mzmin"]*1e5), as.integer(obj@peakBounds[i,"mzmax"]*1e5))
         dt <- DT[.(mzseq), nomatch = 0]
-        dt <- dt[, xic := log2(max(intensity)+1), by = .(scan, sample)]
+        dt <- dt[, eic := log2(max(intensity)+1), by = .(scan, sample)]
         dup <- duplicated(dt[,.(scan,sample)])
         dt <- dt[!dup]
-        xics <- lapply(seq_along(obj@fileNames), function(s) {
+        eics <- lapply(seq_along(obj@fileNames), function(s) {
             subdt <- dt[sample==s]
             if (nrow(subdt) < 2) {
                 return(approxfun(x = 1:2, y = rep(0,2), rule = 2))
             } else {
-                return(approxfun(x = subdt[,scan], y = subdt[,xic], rule = 2))
+                return(approxfun(x = subdt[,scan], y = subdt[,eic], rule = 2))
             }
         })
-        return(xics)
+        return(eics)
     })
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
@@ -531,10 +531,10 @@ getXICsAndQuantifyWithRetentionTime <- function(obj, verbose = FALSE) {
     scanstep <- 0.01
     scanseq <- seq(0, mzParams$maxScan, scanstep)
     ptime1 <- proc.time()
-    quantmat <- do.call(rbind, lapply(seq_along(obj@xicsRaw), function(i) {
+    quantmat <- do.call(rbind, lapply(seq_along(obj@eicsRaw), function(i) {
                                    wh <- which.min(abs(scanseq-obj@peakBounds[i,"scan.min"])):which.min(abs(scanseq-obj@peakBounds[i,"scan.max"]))
-                                   sapply(obj@xicsRaw[[i]], function(xic) {
-                                       f <- (2^xic(scanseq))-1
+                                   sapply(obj@eicsRaw[[i]], function(eic) {
+                                       f <- (2^eic(scanseq))-1
                                        return(sum(f[wh])*scanstep)
                                    })
                                }))
@@ -554,8 +554,9 @@ getXICsAndQuantifyWithoutRetentionTime <- function(obj, verbose = FALSE) {
     mzParams <- obj@mzParams
     DT <- obj@rawPeakDT
     ptime1 <- proc.time()
-    obj@xicsRaw <- getAllXics(cms = obj, mzranges = IRanges(start = as.integer(obj@peakBounds[,"mzmin"]*1e5),
-                                                            end = as.integer(obj@peakBounds[,"mzmax"]*1e5)))
+    irmzr <- IRanges(start = as.integer(obj@peakBounds[,"mzmin"]*1e5), 
+                     end = as.integer(obj@peakBounds[,"mzmax"]*1e5))
+    obj@eicsRaw <- getEICS(cms = obj, mzranges = irmzr)
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) {
@@ -567,7 +568,7 @@ getXICsAndQuantifyWithoutRetentionTime <- function(obj, verbose = FALSE) {
         message("[getXICsAndQuantifyWithoutRetentionTime] Impute")
     }
     ptime1 <- proc.time()
-    obj@xicsImputed <- lapply(obj@xicsRaw, function(x) {
+    obj@eicsImputed <- lapply(obj@eicsRaw, function(x) {
         do.call(cbind, lapply(1:ncol(x), function(col) {
                            bool <- x[,col] > 1e-6
                            if (sum(bool) < 2)
@@ -584,8 +585,8 @@ getXICsAndQuantifyWithoutRetentionTime <- function(obj, verbose = FALSE) {
     if(verbose) {
         message("[getXICsAndQuantifyWithoutRetentionTime] quantify")
     }
-    quantmat <- do.call(rbind, lapply(seq_along(obj@xicsImputed), function(i) {
-                                   mat <- obj@xicsImputed[[i]][obj@peakBounds[i, "scan.min"]:min(c(obj@peakBounds[i, "scan.max"], mzParams$maxScan)),,drop = FALSE]
+    quantmat <- do.call(rbind, lapply(seq_along(obj@eicsImputed), function(i) {
+                                   mat <- obj@eicsImputed[[i]][obj@peakBounds[i, "scan.min"]:min(c(obj@peakBounds[i, "scan.max"], mzParams$maxScan)),,drop = FALSE]
                                    mat <- (2^mat)-1
                                    colSums(mat)
                                }))
