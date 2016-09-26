@@ -10,6 +10,14 @@ rawpeakinfo <- function(obj) {
     obj@rawpeakinfo
 }
 
+rawdataDT <- function(obj) {
+	obj@DT
+}
+
+bgcorrdataDT <- function(obj) {
+	obj@DTbgcorr
+}
+
 densityEstimate <- function(obj) {
     obj@dens
 }
