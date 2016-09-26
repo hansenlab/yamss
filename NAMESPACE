@@ -4,6 +4,7 @@ importFrom(ProtGenerics, intensity, mz)
 importMethodsFrom(S4Vectors, colSums, complete.cases, head, tail)
 
 ## Mass spec stuff
+
 importFrom(mzR, openMSfile)
 importMethodsFrom(mzR, peaks, header, close)
 
@@ -17,6 +18,7 @@ importFrom(graphics, image)
 importFrom(grDevices, colorRampPalette)
 
 ## Other packages
+
 importFrom(S4Vectors, queryHits, subjectHits)
 importMethodsFrom(S4Vectors, colMeans, colSums, do.call, head,
                   is.unsorted, rowMeans, rowSums, sapply, sort, t,
@@ -32,6 +34,7 @@ importFrom(limma, eBayes, lmFit, topTable)
 ## Export
 
 export(getPeakInfo, getTIC, getAllXics, getDiffTable, bakedpi, readRawDataAsDataTable)
+export(plotDensityRegion, updatePeaks)
 export(files, classes, rawpeakinfo, densityEstimate, densityCutoff, 
        densityQuantiles, peakBounds, peakQuants, diffrep)
 exportClass("cms")
