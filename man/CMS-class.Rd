@@ -83,7 +83,16 @@ performed.
   We have the following utility functions:
 
   \describe{
-    \item{\code{show}:}{The show method; prints the object.}
+    \item{\code{show}:}{
+      The show method; prints the object.
+    }
+    \item{\code{getEICS}:}{
+      Gets extracted ion chromatograms (EICs) for the supplied M/Z ranges.
+    }
+    \item{\code{updatePeaks}:}{
+      Given a new threshold value for the density estimate, repeats peak 
+      detection and quantification and provides an updated \code{CMS} object.
+    }
   }
 }
 
