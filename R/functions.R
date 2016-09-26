@@ -63,6 +63,9 @@ getDiffTable <- function(quants, classes) {
 }
 
 plotDensityRegion <- function(obj, mzrange, scanrange) {
+    if (nrow(obj@dens)==0) {
+        stop("cms object must have a density estimate")
+    }
     mzs <- as.numeric(rownames(obj@dens))
     scans <- as.numeric(colnames(obj@dens))
     idxMZ <- which.min(abs(mzrange[1]-mzs)):which.min(abs(mzrange[2]-mzs))
@@ -75,6 +78,9 @@ plotDensityRegion <- function(obj, mzrange, scanrange) {
 }
 
 updatePeaks <- function(obj, cutoff) {
+    if (nrow(obj@dens)==0) {
+        stop("cms object must have a density estimate")
+    }
     newblobs <- getBlobs(obj@dens, dcutoff = cutoff, verbose = FALSE)
     obj@blobs <- newblobs
     if (obj@rtalign) {
