@@ -27,8 +27,9 @@ extracted ion chromatogram.
 \dontrun{
 if (require(mtbls2)) {
 data(mtbls2)
+## Same example as in example(bakedpi) and the vignette
 filepath <- file.path(find.package("mtbls2"), "mzData")
-files <- list.files(filepath, pattern = "MSpos-Ex1" recursive = TRUE, full.names = TRUE)
+files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)
 cmsobj <- bakedpi(files = files, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
                   outfileDens = NULL, dortalign = TRUE, mzsubset = c(500, 520))
 mzranges <- rbind(c(500.01, 500.03), c(511.44, 511.46))
@@ -36,3 +37,5 @@ eicList <- getEICS(cmsobj, mzranges)
 }
 }
 }
+
+

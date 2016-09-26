@@ -15,7 +15,9 @@ plotDensityRegion(cms, mzrange, scanrange)
 Makes an \code{image} plot of the density estimate in the specified 
 M/Z and scan region.
 }
-
+\value{
+  This function is invoked for its side effect of plotting.
+}
 \examples{
 ## For illustration purposes, we make a "dummy" object
 ## with a random matrix as the density estimate
