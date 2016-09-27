@@ -1,6 +1,6 @@
 setClass("CMSraw",
          slots = c(phenoData = "data.frame", # perhaps DataFrane, and probably a different name.
-                   rawDT = "data.frame",
+                   rawDT = "data.table",
                    mzParams = "list"
                    )
          )
@@ -8,7 +8,7 @@ setClass("CMSraw",
 setClass("CMSproc",
          contains = "CMSraw",
          representation( # FIXME: we might potentially want to store arguments of the call that made the object
-             bgcorrDT = "data.frame",
+             bgcorrDT = "data.table",
              density = "matrix",
              densityCutoff = "numeric",
              densityQuantiles = "numeric",
