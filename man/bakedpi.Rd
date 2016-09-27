@@ -59,7 +59,7 @@ if (require(mtbls2)) {
 data(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")
 files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)
-pheno <- DataFrame(sampClasses = rep(c("wild-type", "mutant"), each = 4))
+pheno <- data.frame(sampClasses = rep(c("wild-type", "mutant"), each = 4))
 cmsRawObj <- readMSdata(files = files, pheno = pheno, verbose = TRUE)
 cmsProcObj <- bakedpi(files = files, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
                   outfileDens = NULL, dortalign = TRUE, mzsubset = c(500, 520))

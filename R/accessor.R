@@ -1,5 +1,5 @@
 setClass("CMSraw",
-         slots = c(phenoData = "DataFrame", # perhaps data.frame, and probably a different name.
+         slots = c(phenoData = "data.frame", # perhaps DataFrane, and probably a different name.
                    rawDT = "data.frame",
                    mzParams = "list"
                    )

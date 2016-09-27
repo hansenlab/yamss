@@ -41,8 +41,8 @@ readMSdata <- function(files, phenoData = NULL, verbose = FALSE) {
         minMZ = 10*floor(min(rawDT[,mz])/1e6),
         maxMZ = 10*ceiling(max(rawDT[,mz])/1e6))
     cmsRaw@rawDT <- rawDT
-    ## Make phenotype DataFrame
-    cmsRaw@phenoData <- cbind(DataFrame(sample = seq_along(files), files = files), phenoData)
+    ## Make phenotype data frame
+    cmsRaw@phenoData <- cbind(data.frame(sample = seq_along(files), files = files), phenoData)
     return(cmsRaw)
 }
 

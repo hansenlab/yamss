@@ -21,7 +21,7 @@ detect peaks.
 \section{Slots}{
   \describe{
     \item{\code{phenoData}:}{
-      a \code{DataFrame} of phenotype and sample information.
+      a \code{data.frame} of phenotype and sample information.
     }
     \item{\code{rawDT}:}{
       a \code{data.table} of raw spectral information.
@@ -77,7 +77,7 @@ detect peaks.
 
   \describe{
     \item{\code{phenoInfo}:}{
-      Gets the \code{DataFrame} containing phenotype and sample information.
+      Gets the \code{data.frame} containing phenotype and sample information.
     }
     \item{\code{rawDT}:}{
       Gets the \code{data.table} containing the raw spectral data.

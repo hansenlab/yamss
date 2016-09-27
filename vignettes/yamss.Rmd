@@ -43,7 +43,7 @@ All that is needed to process these raw mass spectral data files is the `bakedpi
 For experiments with a wide range of M/Z values or several thousands of scans, the computation of the density estimate can be time-intensive. For this reason, it can be useful to save the density estimate in an external file specified by the `outfileDens` argument. If `outfileDens` is set to `NULL`, then the density estimate is not saved and must be recomputed if we wish to process the data again. Specifying the filename of the saved density estimate in `outfileDens` when rerunning `bakedpi()` skips the density estimation phase which can save a lot of time.
 
 ```{r}
-pheno <- DataFrame(sampClasses = classes, ionmode = "pos")
+pheno <- data.frame(sampClasses = classes, ionmode = "pos")
 cmsRawObj <- readMSdata(files = files, pheno = pheno, verbose = TRUE)
 ```
 

@@ -14,7 +14,7 @@ this class are created by the \code{readMSdata} function.
 \section{Slots}{
   \describe{
     \item{\code{phenoData}:}{
-      a \code{DataFrame} of phenotype and sample information.
+      a \code{data.frame} of phenotype and sample information.
     }
     \item{\code{rawDT}:}{
       a \code{data.table} of raw spectral information.
@@ -44,7 +44,7 @@ this class are created by the \code{readMSdata} function.
 
   \describe{
     \item{\code{phenoInfo}:}{
-      Gets the \code{DataFrame} containing phenotype and sample information.
+      Gets the \code{data.frame} containing phenotype and sample information.
     }
     \item{\code{rawDT}:}{
       Gets the \code{data.table} containing the raw spectral data.
@@ -57,7 +57,7 @@ if (require(mtbls2)) {
 data(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")
 files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)
-pheno <- DataFrame(sampClasses = rep(c("wild-type", "mutant"), each = 4))
+pheno <- data.frame(sampClasses = rep(c("wild-type", "mutant"), each = 4))
 cmsRawObj <- readMSdata(files = files, pheno = pheno, verbose = TRUE)
 phenoInfo(cmsRawObj)
 rawDT(cmsRawObj)

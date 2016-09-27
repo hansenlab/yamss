@@ -24,17 +24,15 @@ In a given M/Z range, the maximum intensity observed in each scan gives the
 extracted ion chromatogram.
 }
 \examples{
-\dontrun{
 if (require(mtbls2)) {
 data(mtbls2)
 ## Same example as in example(bakedpi) and the vignette
 filepath <- file.path(find.package("mtbls2"), "mzData")
 files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)
-pheno <- DataFrame(sampClasses = rep(c("wild-type", "mutant"), each = 4))
+pheno <- data.frame(sampClasses = rep(c("wild-type", "mutant"), each = 4))
 cmsRawObj <- readMSdata(files = files, pheno = pheno, verbose = TRUE)
 mzranges <- rbind(c(500.01, 500.03), c(511.44, 511.46))
 eicList <- getEICS(cmsRawObj, mzranges)
-}
 }
 }
 
