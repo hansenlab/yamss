@@ -46,7 +46,6 @@ setMethod("show", signature(object = "CMSproc"),
 }
 
 ## FIMXE: need some phenoData extractor
-## FIXME: need something to extract something to loop over
 
 
 densityEstimate <- function(object) {

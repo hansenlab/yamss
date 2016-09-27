@@ -13,8 +13,12 @@ readMSdata <- function(files, phenoData = NULL, verbose = FALSE) {
     if(verbose) {
         message(sprintf("[readRaw]: Reading %i files", length(files)))
     }
-    ## FIXME: check that file exists
-    ## FIXME: if phenoData is supplied, check nrow(phenoData) is length(files)
+    ## Check that file exists
+    stopifnot(all(file.exists(files)))
+    ## If phenoData is supplied, check nrow(phenoData)==length(files)
+    if (!is.null(phenoData)) {
+        stopifnot(nrow(phenoData)==length(files))
+    }
     cmsRaw <- new("CMSraw")
     rawPeakInfo <- getPeakInfo(files)
     ## Make raw data matrix and data.table
@@ -43,7 +47,7 @@ readMSdata <- function(files, phenoData = NULL, verbose = FALSE) {
 }
 
 backgroundCorrection <- function(object, verbose = FALSE) {
-    ## FIXME: check here and below that object is of class CMSproc
+    stopifnot(is(object, "CMSproc"))
     mzParams <- object@mzParams
     rawDT <- object@rawDT
     setkey(rawDT, mz, scan, sample)
@@ -151,9 +155,9 @@ backgroundCorrection <- function(object, verbose = FALSE) {
 }
 
 rtAlignment <- function(object, verbose = FALSE) {
-    cmsRaw <- object@cmsRaw
-    mzParams <- cmsRaw@mzParams
-    rawDT <- cmsRaw@rawDT
+    stopifnot(is(object, "CMSproc"))
+    mzParams <- object@mzParams
+    rawDT <- object@rawDT
     bgcorrDT <- object@bgcorrDT
     if(verbose) {
         message("[rtAlignment] Get rough M/Z regions to align")
@@ -180,8 +184,8 @@ rtAlignment <- function(object, verbose = FALSE) {
         message("[rtAlignment] Get XICs for these regions")
     }
     ptime1 <- proc.time()
-    eics <- getEICS(cmsRaw = cmsRaw, mzranges = irmzr)
-    scans <- 1:cmsRaw@mzParams$maxScan
+    eics <- getEICS(object, mzranges = irmzr)
+    scans <- 1:object@mzParams$maxScan
     eicsImputed <- lapply(eics, function(x) {
         do.call(cbind, lapply(1:ncol(x), function(col) {
                            bool <- x[,col] > 1e-6
@@ -250,8 +254,8 @@ rtAlignment <- function(object, verbose = FALSE) {
     bgcorrDT[, scan := scan + shift]
     rawDT[, shift := NULL]
     bgcorrDT[, shift := NULL]
-    rawDT <- rawDT[scan >= 1 & scan <= cmsRaw@mzParams$maxScan]
-    bgcorrDT <- bgcorrDT[scan >= 1 & scan <= cmsRaw@mzParams$maxScan]
+    rawDT <- rawDT[scan >= 1 & scan <= object@mzParams$maxScan]
+    bgcorrDT <- bgcorrDT[scan >= 1 & scan <= object@mzParams$maxScan]
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) {
@@ -264,7 +268,7 @@ rtAlignment <- function(object, verbose = FALSE) {
 
 densityEstimation <- function(object, dgridstep = dgridstep, dbandwidth = dbandwidth, 
                               outfileDens, verbose = FALSE) {
-    cmsRaw <- object@cmsRaw
+    stopifnot(is(object, "CMSproc"))
     bgcorrDT <- object@bgcorrDT
     getDensityEstimateApprox <- function(bgcorrDT, bw = dbandwidth,
                                          gridstep = dgridstep, maxbws = 4, mzParams) {
@@ -361,7 +365,7 @@ densityEstimation <- function(object, dgridstep = dgridstep, dbandwidth = dbandw
         } else {
             ptime1 <- proc.time()
             densList <- getDensityEstimateApprox(bgcorrDT = bgcorrDT, bw = dbandwidth,
-                                                 gridstep = dgridstep, maxbws = 4, mzParams = cmsRaw@mzParams)
+                                                 gridstep = dgridstep, maxbws = 4, mzParams = object@mzParams)
             ptime2 <- proc.time()
             stime <- (ptime2 - ptime1)[3]
             if(verbose) {
@@ -373,7 +377,7 @@ densityEstimation <- function(object, dgridstep = dgridstep, dbandwidth = dbandw
     } else {
         ptime1 <- proc.time()
         densList <- getDensityEstimateApprox(bgcorrDT = bgcorrDT, bw = dbandwidth,
-                                             gridstep = dgridstep, maxbws = 4, mzParams = cmsRaw@mzParams)
+                                             gridstep = dgridstep, maxbws = 4, mzParams = object@mzParams)
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
         if(verbose) {
@@ -392,8 +396,8 @@ densityEstimation <- function(object, dgridstep = dgridstep, dbandwidth = dbandw
         message(sprintf("[densityEstimation] .. done in %.1f secs.", stime))
     }
     rm(densList)
-    rownames(dmat) <- seq(obj@mzParams$minMZ, obj@mzParams$maxMZ, length.out = nrow(dmat))
-    colnames(dmat) <- seq(1, obj@mzParams$maxScan, dgridstep[2])
+    rownames(dmat) <- seq(object@mzParams$minMZ, object@mzParams$maxMZ, length.out = nrow(dmat))
+    colnames(dmat) <- seq(1, object@mzParams$maxScan, dgridstep[2])
     return(list(dmat = dmat))
 }
 
@@ -401,9 +405,9 @@ getCutoff <- function(object, by = 2, verbose = FALSE) {
     if(verbose) {
         message("[getDensityCutoff] Get density cutoff")
     }
+    stopifnot(is(object, "CMSproc"))
     ptime1 <- proc.time()
-    cmsRaw <- object@cmsRaw
-    mzParams <- cmsRaw@mzParams
+    mzParams <- object@mzParams
     bgcorrDT <- object@bgcorrDT
     densmat <- object@density
     mzregions <- seq(mzParams$minMZ, mzParams$maxMZ, by)
@@ -506,9 +510,9 @@ getXICsAndQuantifyWithRetentionTime <- function(object, verbose = FALSE) {
     if(verbose) {
         message("[getXICsAndQuantifyWithRetentionTime] compute XICs")
     }
-    cmsRaw <- object@cmsRaw
-    mzParams <- cmsRaw@mzParams
-    rawDT <- cmsRaw@rawDT
+    stopifnot(is(object, "CMSproc"))
+    mzParams <- object@mzParams
+    rawDT <- object@rawDT
     setkey(rawDT, mz, scan)
     ptime1 <- proc.time()
     eicsRaw <- lapply(1:nrow(object@peakBounds), function(i) {
@@ -556,12 +560,12 @@ getXICsAndQuantifyWithoutRetentionTime <- function(object, verbose = FALSE) {
     if(verbose) {
         message("[getXICsAndQuantifyWithoutRetentionTime] compute XICs")
     }
-    cmsRaw <- object@cmsRaw
-    mzParams <- cmsRaw@mzParams
+    stopifnot(is(object, "CMSproc"))
+    mzParams <- object@mzParams
     ptime1 <- proc.time()
     irmzr <- IRanges(start = as.integer(object@peakBounds[,"mzmin"]*1e5), 
                      end = as.integer(object@peakBounds[,"mzmax"]*1e5))
-    eicsRaw <- getEICS(cmsRaw = cmsRaw, mzranges = irmzr)
+    eicsRaw <- getEICS(object, mzranges = irmzr)
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) {
@@ -621,7 +625,8 @@ bakedpi <- function(cmsRaw, dbandwidth = c(0.005, 10),
     if(verbose) {
         message("[bakedpi] Background correction")
     }
-    object <- new("CMSproc", cmsRaw = cmsRaw)
+    object <- new("CMSproc", phenoData = cmsRaw@phenoData, 
+                  rawDT = cmsRaw@rawDT, mzParams = cmsRaw@mzParams)
     object <- backgroundCorrection(object = object, verbose = subverbose)
 
     if (dortalign) {
