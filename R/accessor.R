@@ -1,8 +1,8 @@
+setOldClass("data.table")
 setClass("CMSraw",
          slots = c(phenoData = "data.frame", # perhaps DataFrane, and probably a different name.
                    rawDT = "data.table",
-                   mzParams = "list"
-                   )
+                   mzParams = "list")
          )
 
 setClass("CMSproc",
