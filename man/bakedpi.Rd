@@ -54,11 +54,13 @@ estimate is computed. A cutoff is determined to call peaks which are then
 quantified and run through a differential analysis pipeline.
 }
 \examples{
+\dontrun{
 if (require(mtbls2)) {
 data(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")
 files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)
 cmsobj <- bakedpi(files = files, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
                   outfileDens = NULL, dortalign = TRUE, mzsubset = c(500, 520))
+}
 }
 }

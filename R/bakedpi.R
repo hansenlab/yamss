@@ -9,10 +9,12 @@
 ## 8. Quantify
 ## 9. Differential analysis
 
-readRaw <- function(files, pheno = NULL, verbose = FALSE) {
+readMSdata <- function(files, phenoData = NULL, verbose = FALSE) {
     if(verbose) {
         message(sprintf("[readRaw]: Reading %i files", length(files)))
     }
+    ## FIXME: check that file exists
+    ## FIXME: if phenoData is supplied, check nrow(phenoData) is length(files)
     cmsRaw <- new("CMSraw")
     rawPeakInfo <- getPeakInfo(files)
     ## Make raw data matrix and data.table
@@ -22,27 +24,29 @@ readRaw <- function(files, pheno = NULL, verbose = FALSE) {
                                                           })), s)
                                  }))
     colnames(rawdatamat) <- c("mz", "intensity", "scan", "sample")
-    rawPeakDT <- data.table(mz = as.integer(rawdatamat[,"mz"]*1e5),
+    rawDT <- data.table(mz = as.integer(rawdatamat[,"mz"]*1e5),
                      intensity = rawdatamat[,"intensity"],
                      scan = rawdatamat[,"scan"],
                      sample = rawdatamat[,"sample"])
     ## Get minimum and maximum M/Zs and scan numbers
-    cmsRaw@mzParams <- list(maxScan = max(rawPeakDT[,scan]),
-                         minMZraw = min(rawPeakDT[,mz])/1e5,
-                         maxMZraw = max(rawPeakDT[,mz])/1e5,
-                         minMZ = 10*floor(min(rawPeakDT[,mz])/1e5/10),
-                         maxMZ = 10*ceiling(max(rawPeakDT[,mz])/1e5/10))
-    cmsRaw@rawPeakDT <- rawPeakDT
+    cmsRaw@mzParams <- list(
+        mminScan = min(rawDT[,scan]),
+        maxScan = max(rawDT[,scan]),
+        minMZraw = min(rawDT[,mz])/1e5,
+        maxMZraw = max(rawDT[,mz])/1e5,
+        minMZ = 10*floor(min(rawDT[,mz])/1e6),
+        maxMZ = 10*ceiling(max(rawDT[,mz])/1e6))
+    cmsRaw@rawDT <- rawDT
     ## Make phenotype DataFrame
-    cmsRaw@phenoData <- DataFrame(pheno, sample = seq_along(files), files = files)
+    cmsRaw@phenoData <- cbind(DataFrame(sample = seq_along(files), files = files), phenoData)
     return(cmsRaw)
 }
 
-backgroundCorrection <- function(cmsProc, verbose = FALSE) {
-    cmsRaw <- cmsProc@raw
-    mzParams <- cmsRaw@mzParams
-    rawPeakDT <- cmsRaw@rawPeakDT
-    setkey(rawPeakDT, mz, scan, sample)
+backgroundCorrection <- function(object, verbose = FALSE) {
+    ## FIXME: check here and below that object is of class CMSproc
+    mzParams <- object@mzParams
+    rawDT <- object@rawDT
+    setkey(rawDT, mz, scan, sample)
     mzbreaks <- c(seq(mzParams$minMZ, mzParams$maxMZ, 10), mzParams$maxMZ)
     scanbreaks <- seq(1, mzParams$maxScan, 40)
     scanbreaks[length(scanbreaks)] <- mzParams$maxScan
@@ -52,10 +56,10 @@ backgroundCorrection <- function(cmsProc, verbose = FALSE) {
     ptime1 <- proc.time()
     densGrid <- lapply(1:(length(mzbreaks)-1), function(m) {
         mzseq <- seq(as.integer(mzbreaks[m]*1e5), as.integer(mzbreaks[m+1]*1e5))
-        DTmz <- rawPeakDT[.(mzseq), nomatch = 0]
+        DTmz <- rawDT[.(mzseq), nomatch = 0]
         lapply(1:(length(scanbreaks)-1), function(rt) {
             DTmzscan <- DTmz[scan %in% scanbreaks[rt]:scanbreaks[rt+1]]
-            lapply(seq_along(cmsRaw@phenoData$files), function(s) {
+            lapply(.sampleNumber(object), function(s) {
                 logintens <- log2(DTmzscan[sample==s, intensity] + 1)
                 if (length(logintens) < 10)
                     return(NA)
@@ -73,7 +77,7 @@ backgroundCorrection <- function(cmsProc, verbose = FALSE) {
     r <- dnorm(bgsd)/dnorm(0)
     bgmeans <- lapply(1:(length(mzbreaks)-1), function(m) {
         lapply(1:(length(scanbreaks)-1), function(rt) {
-            lapply(seq_along(cmsRaw@phenoData$files), function(s) {
+            lapply(.sampleNumber(object), function(s) {
                 dens <- densGrid[[m]][[rt]][[s]]
                 if (class(dens)=="density") {
                     indexFirstPeak <- which.max(diff(dens$y) < 0)
@@ -89,7 +93,7 @@ backgroundCorrection <- function(cmsProc, verbose = FALSE) {
         message("[backgroundCorrection] get region-specific background trends")
     }
     ptime1 <- proc.time()
-    smooths <- lapply(seq_along(cmsRaw@phenoData$files), function(s) {
+    smooths <- lapply(.sampleNumber(object), function(s) {
         ## rows = scans, cols = M/Z bins
         ## Each col is the background trend across scans for a particular M/Z region
         bgmeanmatThisSample <- do.call(cbind, lapply(bgmeans, function(mzList) {
@@ -119,19 +123,19 @@ backgroundCorrection <- function(cmsProc, verbose = FALSE) {
     }
 
     ## Perform background correction
-    setkey(rawPeakDT, mz, sample)
+    setkey(rawDT, mz, sample)
     if(verbose) {
         message("[backgroundCorrection] correct intensities")
     }
     ptime1 <- proc.time()
-    bgcorrDT <- rbindlist(lapply(seq_along(cmsRaw@phenoData$files), function(s) {
+    bgcorrDT <- rbindlist(lapply(.sampleNumber(object), function(s) {
         bgmeanmatSmoothed <- smooths[[s]]
         mzbounds <- attr(bgmeanmatSmoothed, "mzbounds")
         rbindlist(lapply(1:nrow(mzbounds), function(i) {
             mzseq <- seq(as.integer(mzbounds[i,1]*1e5), as.integer(mzbounds[i,2]*1e5))
             bgtrend <- bgmeanmatSmoothed[,i]
             bgtrend[is.na(bgtrend)] <- 0
-            rawPeakDT[.(mzseq), nomatch = 0][sample==s][,bg := (2^bgtrend[scan])-1]
+            rawDT[.(mzseq), nomatch = 0][sample==s][,bg := (2^bgtrend[scan])-1]
         }))
     }))
     bgcorrDT[, intensity := intensity - bg]
@@ -142,15 +146,15 @@ backgroundCorrection <- function(cmsProc, verbose = FALSE) {
     if(verbose) {
         message(sprintf("[backgroundCorrection]  .. done in %.1f secs.", stime))
     }
-    cmsProc@bgcorrDT <- bgcorrDT
-    return(cmsProc)
+    object@bgcorrDT <- bgcorrDT
+    return(object)
 }
 
-rtAlignment <- function(cmsProc, verbose = FALSE) {
-    cmsRaw <- cmsProc@cmsRaw
+rtAlignment <- function(object, verbose = FALSE) {
+    cmsRaw <- object@cmsRaw
     mzParams <- cmsRaw@mzParams
-    rawPeakDT <- cmsRaw@rawPeakDT
-    bgcorrDT <- cmsProc@bgcorrDT
+    rawDT <- cmsRaw@rawDT
+    bgcorrDT <- object@bgcorrDT
     if(verbose) {
         message("[rtAlignment] Get rough M/Z regions to align")
     }
@@ -195,12 +199,12 @@ rtAlignment <- function(cmsProc, verbose = FALSE) {
     ptime1 <- proc.time()
     shifts <- -20:20
     bgcorrDT[, scanorig := scan]
-    rawPeakDT[, scanorig := scan]
+    rawDT[, scanorig := scan]
     shiftsList <- lapply(seq_along(irmzr), function(i) {
         eicmat <- eics[[i]]
         eicimpmat <- eicsImputed[[i]]
         refsamp <- which.max(colSums(eicmat))
-        bestShiftBySample <- sapply(seq_along(cmsRaw@phenoData$files), function(s) {
+        bestShiftBySample <- sapply(.sampleNumber(object), function(s) {
             if (s==refsamp) {
                 return(0)
             }
@@ -232,36 +236,36 @@ rtAlignment <- function(cmsProc, verbose = FALSE) {
     }
     ptime1 <- proc.time()
     setkey(bgcorrDT, mz, sample)
-    setkey(rawPeakDT, mz, sample)
+    setkey(rawDT, mz, sample)
     for (i in seq_along(irmzr)) {
         mzseq <- seq(start(irmzr[i]), end(irmzr[i]))
-        for (s in seq_along(cmsRaw@pheno$files)) {
-            rawPeakDT[CJ(mzseq,s), shift := shiftsList[[i]][s], nomatch = 0]
+        for (s in .sampleNumber(object)) {
+            rawDT[CJ(mzseq,s), shift := shiftsList[[i]][s], nomatch = 0]
             bgcorrDT[CJ(mzseq,s), shift := shiftsList[[i]][s], nomatch = 0]
         }
     }
-    rawPeakDT[, shift := ifelse(is.na(shift), 0, shift)]
+    rawDT[, shift := ifelse(is.na(shift), 0, shift)]
     bgcorrDT[, shift := ifelse(is.na(shift), 0, shift)]
-    rawPeakDT[, scan := scan + shift]
+    rawDT[, scan := scan + shift]
     bgcorrDT[, scan := scan + shift]
-    rawPeakDT[, shift := NULL]
+    rawDT[, shift := NULL]
     bgcorrDT[, shift := NULL]
-    rawPeakDT <- rawPeakDT[scan >= 1 & scan <= cmsRaw@mzParams$maxScan]
+    rawDT <- rawDT[scan >= 1 & scan <= cmsRaw@mzParams$maxScan]
     bgcorrDT <- bgcorrDT[scan >= 1 & scan <= cmsRaw@mzParams$maxScan]
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) {
         message(sprintf(".. done in %.1f secs.", stime))
     }
-    cmsProc@rawPeakDT <- rawPeakDT
-    cmsProc@bgcorrDT <- bgcorrDT
-    return(cmsProc)
+    object@rawDT <- rawDT
+    object@bgcorrDT <- bgcorrDT
+    return(object)
 }
 
-densityEstimation <- function(cmsProc, dgridstep = dgridstep, dbandwidth = dbandwidth, 
+densityEstimation <- function(object, dgridstep = dgridstep, dbandwidth = dbandwidth, 
                               outfileDens, verbose = FALSE) {
-    cmsRaw <- cmsProc@cmsRaw
-    bgcorrDT <- cmsProc@bgcorrDT
+    cmsRaw <- object@cmsRaw
+    bgcorrDT <- object@bgcorrDT
     getDensityEstimateApprox <- function(bgcorrDT, bw = dbandwidth,
                                          gridstep = dgridstep, maxbws = 4, mzParams) {
         gridseqMz <- seq(mzParams$minMZ, mzParams$maxMZ, gridstep[1])
@@ -393,15 +397,15 @@ densityEstimation <- function(cmsProc, dgridstep = dgridstep, dbandwidth = dband
     return(list(dmat = dmat))
 }
 
-getCutoff <- function(cmsProc, by = 2, verbose = FALSE) {
+getCutoff <- function(object, by = 2, verbose = FALSE) {
     if(verbose) {
         message("[getDensityCutoff] Get density cutoff")
     }
     ptime1 <- proc.time()
-    cmsRaw <- cmsProc@cmsRaw
+    cmsRaw <- object@cmsRaw
     mzParams <- cmsRaw@mzParams
-    bgcorrDT <- cmsProc@bgcorrDT
-    densmat <- cmsProc@density
+    bgcorrDT <- object@bgcorrDT
+    densmat <- object@density
     mzregions <- seq(mzParams$minMZ, mzParams$maxMZ, by)
     setkey(bgcorrDT, mz)
     densmatMzs <- as.numeric(rownames(densmat))
@@ -424,7 +428,7 @@ getCutoff <- function(cmsProc, by = 2, verbose = FALSE) {
         mzseq <- seq(as.integer(mzwindow[1]*1e5), as.integer(mzwindow[2]*1e5))
         subdt <- bgcorrDT[.(mzseq), nomatch = 0][scan >= scanwindow[1] & scan <= scanwindow[2]]
         ## Skip if number of points in region isn't >= number of samples
-        if (nrow(subdt) < length(obj@fileNames))
+        if (nrow(subdt) < length(.sampleNumber(object)))
             return(c())
         ## Get the M/Z range of this rough "peak"
         dens <- density(subdt[,mz]/1e5)
@@ -498,22 +502,22 @@ getBlobs <- function(densmat, dcutoff, verbose = FALSE) {
     return(blobs)
 }
 
-getXICsAndQuantifyWithRetentionTime <- function(cmsProc, verbose = FALSE) {
+getXICsAndQuantifyWithRetentionTime <- function(object, verbose = FALSE) {
     if(verbose) {
         message("[getXICsAndQuantifyWithRetentionTime] compute XICs")
     }
-    cmsRaw <- cmsProc@cmsRaw
+    cmsRaw <- object@cmsRaw
     mzParams <- cmsRaw@mzParams
-    rawPeakDT <- cmsRaw@rawPeakDT
-    setkey(rawPeakDT, mz, scan)
+    rawDT <- cmsRaw@rawDT
+    setkey(rawDT, mz, scan)
     ptime1 <- proc.time()
-    eicsRaw <- lapply(1:nrow(cmsProc@peakBounds), function(i) {
-        mzseq <- seq(as.integer(cmsProc@peakBounds[i,"mzmin"]*1e5), as.integer(cmsProc@peakBounds[i,"mzmax"]*1e5))
-        dt <- rawPeakDT[.(mzseq), nomatch = 0]
+    eicsRaw <- lapply(1:nrow(object@peakBounds), function(i) {
+        mzseq <- seq(as.integer(object@peakBounds[i,"mzmin"]*1e5), as.integer(object@peakBounds[i,"mzmax"]*1e5))
+        dt <- rawDT[.(mzseq), nomatch = 0]
         dt <- dt[, eic := log2(max(intensity)+1), by = .(scan, sample)]
         dup <- duplicated(dt[,.(scan,sample)])
         dt <- dt[!dup]
-        eics <- lapply(seq_along(cmsRaw@phenoData$files), function(s) {
+        eics <- lapply(.sampleNumber(object), function(s) {
             subdt <- dt[sample==s]
             if (nrow(subdt) < 2) {
                 return(approxfun(x = 1:2, y = rep(0,2), rule = 2))
@@ -533,7 +537,7 @@ getXICsAndQuantifyWithRetentionTime <- function(cmsProc, verbose = FALSE) {
     scanseq <- seq(0, mzParams$maxScan, scanstep)
     ptime1 <- proc.time()
     quantmat <- do.call(rbind, lapply(seq_along(eicsRaw), function(i) {
-                                   wh <- which.min(abs(scanseq-cmsProc@peakBounds[i,"scan.min"])):which.min(abs(scanseq-cmsProc@peakBounds[i,"scan.max"]))
+                                   wh <- which.min(abs(scanseq-object@peakBounds[i,"scan.min"])):which.min(abs(scanseq-object@peakBounds[i,"scan.max"]))
                                    sapply(eicsRaw[[i]], function(eic) {
                                        f <- (2^eic(scanseq))-1
                                        return(sum(f[wh])*scanstep)
@@ -544,19 +548,19 @@ getXICsAndQuantifyWithRetentionTime <- function(cmsProc, verbose = FALSE) {
     if(verbose) {
         message(sprintf("[getXICsAndQuantifyWithRetentionTime]  .. done in %.1f secs.", stime))
     }
-    cmsProc@peakQuants <- quantmat
-    return(cmsProc)
+    object@peakQuants <- quantmat
+    return(object)
 }
 
-getXICsAndQuantifyWithoutRetentionTime <- function(cmsProc, verbose = FALSE) {
+getXICsAndQuantifyWithoutRetentionTime <- function(object, verbose = FALSE) {
     if(verbose) {
         message("[getXICsAndQuantifyWithoutRetentionTime] compute XICs")
     }
-    cmsRaw <- cmsProc@cmsRaw
+    cmsRaw <- object@cmsRaw
     mzParams <- cmsRaw@mzParams
     ptime1 <- proc.time()
-    irmzr <- IRanges(start = as.integer(cmsProc@peakBounds[,"mzmin"]*1e5), 
-                     end = as.integer(cmsProc@peakBounds[,"mzmax"]*1e5))
+    irmzr <- IRanges(start = as.integer(object@peakBounds[,"mzmin"]*1e5), 
+                     end = as.integer(object@peakBounds[,"mzmax"]*1e5))
     eicsRaw <- getEICS(cmsRaw = cmsRaw, mzranges = irmzr)
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
@@ -587,12 +591,12 @@ getXICsAndQuantifyWithoutRetentionTime <- function(cmsProc, verbose = FALSE) {
         message("[getXICsAndQuantifyWithoutRetentionTime] quantify")
     }
     quantmat <- do.call(rbind, lapply(seq_along(eicsImputed), function(i) {
-                                   mat <- eicsImputed[[i]][cmsProc@peakBounds[i, "scan.min"]:min(c(cmsProc@peakBounds[i, "scan.max"], mzParams$maxScan)),,drop = FALSE]
+                                   mat <- eicsImputed[[i]][object@peakBounds[i, "scan.min"]:min(c(object@peakBounds[i, "scan.max"], mzParams$maxScan)),,drop = FALSE]
                                    mat <- (2^mat)-1
                                    colSums(mat)
                                }))
-    cmsProc@peakQuants <- quantmat
-    return(cmsProc)
+    object@peakQuants <- quantmat
+    return(object)
 }
 
 bakedpi <- function(cmsRaw, dbandwidth = c(0.005, 10),
@@ -608,53 +612,53 @@ bakedpi <- function(cmsRaw, dbandwidth = c(0.005, 10),
 
     ## Subset if specified
     if (!is.null(mzsubset)) {
-        rawPeakDT <- cmsRaw@rawPeakDT
-        setkey(rawPeakDT, mz, scan)
+        rawDT <- cmsRaw@rawDT
+        setkey(rawDT, mz, scan)
         mzseq <- seq(as.integer(mzsubset[1]*1e5), as.integer(mzsubset[2]*1e5))
-        cmsRaw@rawPeakDT <- rawPeakDT[.(mzseq), nomatch = 0]
+        cmsRaw@rawDT <- rawDT[.(mzseq), nomatch = 0]
     }
 
     if(verbose) {
         message("[bakedpi] Background correction")
     }
-    cmsProc <- new("CMSproc", cmsRaw = cmsRaw)
-    cmsProc <- backgroundCorrection(cmsProc = cmsProc, verbose = subverbose)
+    object <- new("CMSproc", cmsRaw = cmsRaw)
+    object <- backgroundCorrection(object = object, verbose = subverbose)
 
     if (dortalign) {
-        cmsProc <- rtAlignment(cmsProc = cmsProc, verbose = subverbose)
+        object <- rtAlignment(object = object, verbose = subverbose)
     }
 
     if(verbose) {
         message("[bakedpi] Density estimation")
     }
-    dmat <- densityEstimation(cmsProc = cmsProc, dbandwidth = dbandwidth,
+    dmat <- densityEstimation(object = object, dbandwidth = dbandwidth,
                               dgridstep = dgridstep, outfileDens = outfileDens,
                               verbose = subverbose)$dmat
-    cmsProc@density <- dmat
+    object@density <- dmat
 
     if(verbose) {
         message("[bakedpi] Computing cutoff")
     }
-    cutoff <- getCutoff(cmsProc = cmsProc, by = 2, verbose = subverbose)
+    cutoff <- getCutoff(object = object, by = 2, verbose = subverbose)
     qs <- seq(0,1,0.001)
-    cmsProc@densityQuantiles <- quantile(dmat[dmat!=0], qs)
-    qcutoff <- which.min(abs(cutoff-cmsProc@densityQuantiles))
+    object@densityQuantiles <- quantile(dmat[dmat!=0], qs)
+    qcutoff <- which.min(abs(cutoff-object@densityQuantiles))
     qref <- which.min(abs(qs-0.99))
-    cmsProc@densityCutoff <- max(cutoff, cmsProc@densityQuantiles[qref])
+    object@densityCutoff <- max(cutoff, object@densityQuantiles[qref])
     if(verbose) {
         message("[bakedpi] Getting blobs")
     }
-    cmsProc@peakBounds <- getBlobs(densmat = dmat, dcutoff = cmsProc@densityCutoff, verbose = subverbose)
+    object@peakBounds <- getBlobs(densmat = dmat, dcutoff = object@densityCutoff, verbose = subverbose)
 
     ## Get XICs and quantifications - methods differ if RT alignment was performed
     if(verbose) {
         message("[bakedpi] Quantifying")
     }
     if (dortalign) {
-        cmsProc <- getXICsAndQuantifyWithRetentionTime(cmsProc = cmsProc, verbose = subverbose)
+        object <- getXICsAndQuantifyWithRetentionTime(object = object, verbose = subverbose)
     } else {
-        cmsProc <- getXICsAndQuantifyWithoutRetentionTime(cmsProc = cmsProc, verbose = subverbose)
+        object <- getXICsAndQuantifyWithoutRetentionTime(object = object, verbose = subverbose)
     }
     
-    return(cmsProc)
+    return(object)
 }
