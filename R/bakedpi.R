@@ -258,21 +258,22 @@ rtAlignment <- function(cmsProc, verbose = FALSE) {
     return(cmsProc)
 }
 
-densityEstimation <- function(obj, dgridstep = dgridstep, dbandwidth = dbandwidth, 
+densityEstimation <- function(cmsProc, dgridstep = dgridstep, dbandwidth = dbandwidth, 
                               outfileDens, verbose = FALSE) {
-    DTbgcorr <- obj@bgcorrDT
-    getDensityEstimateApprox <- function(DTbgcorr, bw = dbandwidth,
+    cmsRaw <- cmsProc@cmsRaw
+    bgcorrDT <- cmsProc@bgcorrDT
+    getDensityEstimateApprox <- function(bgcorrDT, bw = dbandwidth,
                                          gridstep = dgridstep, maxbws = 4, mzParams) {
         gridseqMz <- seq(mzParams$minMZ, mzParams$maxMZ, gridstep[1])
         gridseqScan <- seq(1, mzParams$maxScan, gridstep[2])
         ## Assign each point to a grid location
-        DTbgcorr[, gmz := cut(mz/1e5, breaks = gridseqMz, labels = FALSE)]
-        DTbgcorr[, gscan := cut(scan, breaks = gridseqScan, labels = FALSE, include.lowest = TRUE)]
+        bgcorrDT[, gmz := cut(mz/1e5, breaks = gridseqMz, labels = FALSE)]
+        bgcorrDT[, gscan := cut(scan, breaks = gridseqScan, labels = FALSE, include.lowest = TRUE)]
         ## Number of grid steps to meet maxbws (density beyond is approx 0)
         ng <- maxbws*bw/gridstep
         ## Sort by M/Z grid location than scan grid location
-        setkey(DTbgcorr, gmz, gscan)
-        tabgmz <- table(factor(DTbgcorr[,gmz], levels = 1:length(gridseqMz)))
+        setkey(bgcorrDT, gmz, gscan)
+        tabgmz <- table(factor(bgcorrDT[,gmz], levels = 1:length(gridseqMz)))
         if(verbose) {
             message("[getDensityEstimateApprox] Getting sparse matrix entries (M/Z)")
         }
@@ -306,7 +307,7 @@ densityEstimation <- function(obj, dgridstep = dgridstep, dbandwidth = dbandwidt
             x = do.call(c, lapply(seq_along(spdensmz), function(i) {
                                spdensmz[[i]][,2]
                            })),
-            dims = c(nrow(DTbgcorr), length(spdensmz))
+            dims = c(nrow(bgcorrDT), length(spdensmz))
         )
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
@@ -317,18 +318,18 @@ densityEstimation <- function(obj, dgridstep = dgridstep, dbandwidth = dbandwidt
         if(verbose) {
             message("[getDensityEstimateApprox] Getting sparse matrix entries (scan) + computing density")
         }
-        gscan <- DTbgcorr[,gscan]
-        intens <- DTbgcorr[,intensity]
+        gscan <- bgcorrDT[,gscan]
+        intens <- bgcorrDT[,intensity]
         intens <- intens - min(intens)
         dtgscan <- data.table(gscan = gscan, row = seq_along(gscan))
         setkey(dtgscan, gscan)
-        denom <- nrow(DTbgcorr)*prod(bw)*sum(DTbgcorr[,intensity])
+        denom <- nrow(bgcorrDT)*prod(bw)*sum(bgcorrDT[,intensity])
         ptime1 <- proc.time()
         dens <- lapply(seq_along(gridseqScan), function(i) {
             whg <- max(i - ng[2], 1):min(i + ng[2], length(gridseqScan))
             at <- dtgscan[.(whg), row, nomatch = 0]
             ## Do intensity weighting here
-            d <- dnorm((gridseqScan[i]-gscan[at])/bw[2])*DTbgcorr[at,intensity]
+            d <- dnorm((gridseqScan[i]-gscan[at])/bw[2])*bgcorrDT[at,intensity]
             ## rep(1) instead of rep(i) because we're forming one column matrices
             ## otherwise dims won't be correct
             spmatscan <- sparseMatrix(i = at, j = rep(1, length(at)), x = d, dims = c(nrow(spmatmz), 1))
@@ -355,8 +356,8 @@ densityEstimation <- function(obj, dgridstep = dgridstep, dbandwidth = dbandwidt
             load(outfileDens)
         } else {
             ptime1 <- proc.time()
-            densList <- getDensityEstimateApprox(DTbgcorr = DTbgcorr, bw = dbandwidth,
-                                                 gridstep = dgridstep, maxbws = 4, mzParams = obj@mzParams)
+            densList <- getDensityEstimateApprox(bgcorrDT = bgcorrDT, bw = dbandwidth,
+                                                 gridstep = dgridstep, maxbws = 4, mzParams = cmsRaw@mzParams)
             ptime2 <- proc.time()
             stime <- (ptime2 - ptime1)[3]
             if(verbose) {
@@ -367,8 +368,8 @@ densityEstimation <- function(obj, dgridstep = dgridstep, dbandwidth = dbandwidt
         }
     } else {
         ptime1 <- proc.time()
-        densList <- getDensityEstimateApprox(DTbgcorr = DTbgcorr, bw = dbandwidth,
-                                             gridstep = dgridstep, maxbws = 4, mzParams = obj@mzParams)
+        densList <- getDensityEstimateApprox(bgcorrDT = bgcorrDT, bw = dbandwidth,
+                                             gridstep = dgridstep, maxbws = 4, mzParams = cmsRaw@mzParams)
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
         if(verbose) {
