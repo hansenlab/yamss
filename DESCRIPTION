@@ -10,7 +10,8 @@ Authors@R: c(
 Depends:
     methods,
     BiocGenerics (>= 0.15.3),
-    limma
+    limma,
+    SummarizedExperiment
 Suggests:
     BiocStyle,
     knitr,

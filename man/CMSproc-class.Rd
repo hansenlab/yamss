@@ -1,7 +1,6 @@
 \name{CMSproc-class}
 \docType{class}
 \alias{CMSproc-class}
-\alias{phenoInfo}
 \alias{rawDT}
 \alias{densityEstimate}
 \alias{densityCutoff}
@@ -20,8 +19,8 @@ detect peaks.
 
 \section{Slots}{
   \describe{
-    \item{\code{phenoData}:}{
-      a \code{data.frame} of phenotype and sample information.
+    \item{\code{colData}:}{
+      a \code{DataFrame} of phenotype and sample information.
     }
     \item{\code{rawDT}:}{
       a \code{data.table} of raw spectral information.
@@ -29,6 +28,10 @@ detect peaks.
     \item{\code{mzParams}:}{
       a list containing the minimum and maximum M/Z value and number of 
       scans in each sample.
+    }
+    \item{\code{rtAlign}:}{
+      a logical indicating whether the data has been retention time
+      aligned or not.
     }
     \item{\code{bgcorrDT}:}{
       a \code{data.table} of background-corrected spectral information.
@@ -46,7 +49,7 @@ detect peaks.
     }
     \item{\code{peakBounds}:}{
       a matrix of information about the detected peaks : M/Z bounds,
-      scan bounds, and ID number (\dQuote{blobnum}).
+      scan bounds, and ID number (\dQuote{peaknum}).
     }
     \item{\code{peakQuants}:}{
       a matrix of quantifications where rows correspond to peaks and 
@@ -76,8 +79,8 @@ detect peaks.
   We have the following accessor functions:
 
   \describe{
-    \item{\code{phenoInfo}:}{
-      Gets the \code{data.frame} containing phenotype and sample information.
+    \item{\code{colData}:}{
+      Gets the \code{DataFrame} containing phenotype and sample information.
     }
     \item{\code{rawDT}:}{
       Gets the \code{data.table} containing the raw spectral data.
@@ -105,7 +108,7 @@ quants <- matrix(rnorm(12*5000), nrow = 5000, ncol = 12)
 bounds <- cbind(mzmin = seq(from = 100, to = 1100, length.out = 5000),
                 mzmax = seq(from = 100, to = 1100, length.out = 5000) + 0.1,
                 scan.min = rep(10,5000), scan.max = rep(20, 5000),
-                blobnum = 1:5000)
+                peaknum = 1:5000)
 cmsobj <- new("CMSproc", peakQuants = quants, peakBounds = bounds)
 head(peakQuants(cmsobj))
 }

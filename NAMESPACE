@@ -1,6 +1,7 @@
 import(methods)
 import(BiocGenerics)
 importMethodsFrom(S4Vectors, colSums, complete.cases, head, tail)
+import(SummarizedExperiment)
 
 ## Mass spec stuff
 
@@ -31,9 +32,9 @@ importFrom(limma, eBayes, lmFit, topTable)
 
 ## Export
 
-export(getPeakInfo, getTIC, getEICS, readMSdata, bakedpi, diffrep)
+export(getTIC, getEICS, readMSdata, bakedpi, diffrep)
 export(plotDensityRegion, updatePeaks)
-export(phenoInfo, rawDT, densityEstimate, densityCutoff, densityQuantiles, 
+export(densityEstimate, densityCutoff, densityQuantiles, 
        peakBounds, peakQuants)
 exportClasses("CMSraw", "CMSproc")
-exportMethods(show)
+exportMethods(show, colData)

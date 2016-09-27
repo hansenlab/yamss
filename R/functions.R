@@ -21,8 +21,10 @@ getPeakInfo <- function(files) {
     return(peakInfoAllfiles)
 }
 
-getTIC <- function(peak.info) {
-    log2(sapply(peak.info, function(spec) { sum(spec[,2]) }) + 1)
+getTIC <- function(object) {
+    stopifnot(is(object, "CMSraw"))
+    ## FIXME 
+    ## log2(sapply(peak.info, function(spec) { sum(spec[,2]) }) + 1)
 }
 
 getEICS <- function(object, mzranges) {
@@ -92,12 +94,11 @@ updatePeaks <- function(cms, cutoff) {
     if (nrow(cms@density)==0) {
         stop("cms cmsect must have a density estimate")
     }
-    newblobs <- getBlobs(cms@density, dcutoff = cutoff, verbose = FALSE)
-    cms@peakBounds <- newblobs
-    if (cms@rtalign) {
-        cms <- getXICsAndQuantifyWithRetentionTime(obj = cms, verbose = FALSE)
+    cms@peakBounds <- computePeakBounds(cms@density, dcutoff = cutoff, verbose = FALSE)
+    if (cms@rtAlign) {
+        cms <- getXICsAndQuantifyWithRetentionTime(object = cms, verbose = FALSE)
     } else {
-        cms <- getXICsAndQuantifyWithoutRetentionTime(obj = cms, verbose = FALSE)
+        cms <- getXICsAndQuantifyWithoutRetentionTime(object = cms, verbose = FALSE)
     }
     return(cms)
 }

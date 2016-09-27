@@ -43,12 +43,12 @@ All that is needed to process these raw mass spectral data files is the `bakedpi
 For experiments with a wide range of M/Z values or several thousands of scans, the computation of the density estimate can be time-intensive. For this reason, it can be useful to save the density estimate in an external file specified by the `outfileDens` argument. If `outfileDens` is set to `NULL`, then the density estimate is not saved and must be recomputed if we wish to process the data again. Specifying the filename of the saved density estimate in `outfileDens` when rerunning `bakedpi()` skips the density estimation phase which can save a lot of time.
 
 ```{r}
-pheno <- data.frame(sampClasses = classes, ionmode = "pos")
-cmsRawObj <- readMSdata(files = files, pheno = pheno, verbose = TRUE)
+colData <- DataFrame(sampClasses = classes, ionmode = "pos")
+cmsRaw <- readMSdata(files = files, colData = colData, mzsubset = c(500,520), verbose = TRUE)
 ```
 
 ```{r}
-cmsProcObj <- bakedpi(cmsRaw = cmsRawObj, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
+cmsProc <- bakedpi(cmsRaw = cmsRaw, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
                   outfileDens = NULL, dortalign = TRUE, mzsubset = c(500, 520), verbose = TRUE)
 ```
 
@@ -59,7 +59,7 @@ The resulting object is an instance of class `CMS` and contains several pieces o
 We can access the differential analysis report with `diffrep()`. This is a convenience function, similar to `diffreport()` from the `r Biocpkg("xcms")` package.  In our case it uses `r Biocpkg("limma")` to do differential analysis; the output of `diffrep()` is basically `topTable()` from `r Biocpkg("limma")`.
 
 ```{r}
-dr <- diffrep(cmsProcObj, classes = classes)
+dr <- diffrep(cmsProc, classes = classes)
 head(dr)
 ```
 
@@ -73,8 +73,8 @@ topPeaks
 We can access the peak bound information with `peakBounds()` and select the rows corresponding to `topPeaks`.
 
 ```{r}
-bounds <- peakBounds(cmsobj)
-idx <- match(topPeaks, bounds[,"blobnum"])
+bounds <- peakBounds(cmsProc)
+idx <- match(topPeaks, bounds[,"peaknum"])
 bounds[idx,]
 ```
 
@@ -87,7 +87,7 @@ In addition to differential analysis results, `CMS` objects contain information 
 The bivariate kernel density estimate matrix can be accessed with `densityEstimate()`.
 
 ```{r}
-dmat <- densityEstimate(cmsProcObj)
+dmat <- densityEstimate(cmsProc)
 ```
 
 We can make a plot of the density estimate in a particular M/Z and scan region with `plotDensityRegion()`.
@@ -95,19 +95,19 @@ We can make a plot of the density estimate in a particular M/Z and scan region w
 ```{r}
 mzrange <- bounds[idx[1], c("mzmin", "mzmax")]
 scanrange <- bounds[idx[1], c("scan.min", "scan.max")]
-plotDensityRegion(cmsProcObj, mzrange = mzrange + c(-0.5,0.5), scanrange = scanrange + c(-30,30))
+plotDensityRegion(cmsProc, mzrange = mzrange + c(-0.5,0.5), scanrange = scanrange + c(-30,30))
 ```
 
 Peaks are called by thresholding the density estimate. If we wish to investigate the impact of varying this cutoff, we can use `densityCutoff` to obtain the original cutoff and `updatePeaks()` to re-call peaks and quantify them. Quantiles of the non-zero density values are also available via `densityQuantiles()`.
 
 ```{r}
-cmsobj2 <- updatePeaks(cmsProcObj, densityCutoff(cmsProcObj)*0.99)
-dqs <- densityQuantiles(cmsProcObj)
+cmsProc2 <- updatePeaks(cmsProc, densityCutoff(cmsProc)*0.99)
+dqs <- densityQuantiles(cmsProc)
 head(dqs)
-cmsobj3 <- updatePeaks(cmsProcObj, dqs["98.5%"])
-nrow(peakBounds(cmsobj)) # Number of peaks detected - original
-nrow(peakBounds(cmsobj2)) # Number of peaks detected - updated
-nrow(peakBounds(cmsobj3)) # Number of peaks detected - updated
+cmsProc3 <- updatePeaks(cmsProc, dqs["98.5%"])
+nrow(peakBounds(cmsProc)) # Number of peaks detected - original
+nrow(peakBounds(cmsProc2)) # Number of peaks detected - updated
+nrow(peakBounds(cmsProc3)) # Number of peaks detected - updated
 ```
 
 # Sessioninfo

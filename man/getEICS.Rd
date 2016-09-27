@@ -2,10 +2,10 @@
 \alias{getEICS}
 \title{Compute extracted ion chromatograms for multiple regions.}
 \usage{
-getEICS(cms, mzranges)
+getEICS(object, mzranges)
 }
 \arguments{
-\item{cms}{An object of class \code{CMSraw} or \code{CMSproc}.}
+\item{object}{An object of class \code{CMSraw} or \code{CMSproc}.}
 \item{mzranges}{A 2-column matrix where each row corresponds to one M/Z
 range and the first and second columns are the minimum and maximum
 M/Z values for the range respectively.}
@@ -29,10 +29,10 @@ data(mtbls2)
 ## Same example as in example(bakedpi) and the vignette
 filepath <- file.path(find.package("mtbls2"), "mzData")
 files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)
-pheno <- data.frame(sampClasses = rep(c("wild-type", "mutant"), each = 4))
-cmsRawObj <- readMSdata(files = files, pheno = pheno, verbose = TRUE)
+colData <- DataFrame(sampClasses = rep(c("wild-type", "mutant"), each = 4))
+cmsRaw <- readMSdata(files = files, colData = colData, verbose = TRUE)
 mzranges <- rbind(c(500.01, 500.03), c(511.44, 511.46))
-eicList <- getEICS(cmsRawObj, mzranges)
+eicList <- getEICS(cmsRaw, mzranges)
 }
 }
 

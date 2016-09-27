@@ -1,25 +1,44 @@
 setOldClass("data.table")
 setClass("CMSraw",
-         slots = c(phenoData = "data.frame", # perhaps DataFrane, and probably a different name.
+         slots = c(colData = "DataFrame",
                    rawDT = "data.table",
-                   mzParams = "list")
+                   mzParams = "list"),
+         prototype = prototype(
+             rawDT = data.table(),
+             colData = DataFrame(),
+             mzParams = list()
          )
+         )
+
 
 setClass("CMSproc",
          contains = "CMSraw",
          representation( # FIXME: we might potentially want to store arguments of the call that made the object
+             rtAlign = "logical", 
              bgcorrDT = "data.table",
              density = "matrix",
              densityCutoff = "numeric",
              densityQuantiles = "numeric",
              peakBounds = "matrix",
-             peakQuants = "matrix")
+             peakQuants = "matrix"),
+         prototype = prototype(
+             rawDT = data.table(),
+             colData = DataFrame(),
+             mzParams = list(),
+             rtAlign = FALSE,
+             bgcorrDT = data.table(),
+             density = matrix(),
+             densityCutoff = numeric(),
+             densityQuantiles = numeric(),
+             peakBounds = matrix(),
+             peakQuants = matrix()
+         )
          )
 
 setMethod("show", signature(object = "CMSraw"),
           function(object) {
     cat("An object of class 'CMSraw'\n")
-    cat(sprintf("Representing %i data files\n", nrow(object@phenoData)))
+    cat(sprintf("Representing %i data files\n", nrow(object@colData)))
     cat(sprintf("Number of scans: %i\n", object@mzParams$maxScan))
     cat(sprintf("M/Z: %f - %f\n", object@mzParams$minMZraw, object@mzParams$maxMZraw))
 })
@@ -27,10 +46,10 @@ setMethod("show", signature(object = "CMSraw"),
 setMethod("show", signature(object = "CMSproc"),
           function(object) {
     cat("An object of class 'CMSproc'\n")
-    cat(sprintf("Representing %i data files\n", nrow(object@phenoData)))
+    cat(sprintf("Representing %i data files\n", nrow(object@colData)))
     cat(sprintf("Number of scans: %i\n", object@mzParams$maxScan))
     cat(sprintf("M/Z: %f - %f\n", object@mzParams$minMZraw, object@mzParams$maxMZraw))
-    # FIXME some more information
+    cat(sprintf("Number of peaks: %i\n", nrow(object@peakBounds)))
 })
 
 ## Convenience functions
@@ -43,21 +62,20 @@ setMethod("show", signature(object = "CMSproc"),
 }
 
 .sampleNumber <- function(object) {
-    object@phenoData[, "sample"]
+    object@colData[, "sample"]
 }
 
-## Accessors for CMSraw and CMSproc
-phenoInfo <- function(object) {
-    stopifnot(is(object, "CMSraw") | is(object, "CMSproc"))
-    object@phenoData
-}
-
-rawDT <- function(object) {
-    stopifnot(is(object, "CMSraw") | is(object, "CMSproc"))
+.rawDT <- function(object) {
+    stopifnot(is(object, "CMSraw"))
     object@rawDT
 }
 
+
 ## Accessors for CMSproc
+setMethod("colData", signature(x = "CMSraw"), function(x) {
+    x@colData
+})
+
 densityEstimate <- function(object) {
     stopifnot(is(object, "CMSproc"))
     object@density

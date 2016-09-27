@@ -1,9 +1,8 @@
 \name{CMSraw-class}
 \docType{class}
 \alias{CMSraw-class}
-\alias{phenoInfo}
-\alias{rawDT}
 \alias{show,CMSraw-method}
+\alias{colData,CMSraw-method}
 \title{A class to hold chromatography-mass spectrometry raw data and metadata.}
 \description{
 This class saves the data from raw mass spectral data files in a 
@@ -13,8 +12,8 @@ this class are created by the \code{readMSdata} function.
 
 \section{Slots}{
   \describe{
-    \item{\code{phenoData}:}{
-      a \code{data.frame} of phenotype and sample information.
+    \item{\code{colData}:}{
+      a \code{DataFrame} of phenotype and sample information.
     }
     \item{\code{rawDT}:}{
       a \code{data.table} of raw spectral information.
@@ -43,8 +42,8 @@ this class are created by the \code{readMSdata} function.
   We have the following accessor functions:
 
   \describe{
-    \item{\code{phenoInfo}:}{
-      Gets the \code{data.frame} containing phenotype and sample information.
+    \item{\code{colData}:}{
+      Gets the \code{DataFrame} containing phenotype and sample information.
     }
     \item{\code{rawDT}:}{
       Gets the \code{data.table} containing the raw spectral data.
@@ -56,10 +55,9 @@ this class are created by the \code{readMSdata} function.
 if (require(mtbls2)) {
 data(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")
-files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)
-pheno <- data.frame(sampClasses = rep(c("wild-type", "mutant"), each = 4))
-cmsRawObj <- readMSdata(files = files, pheno = pheno, verbose = TRUE)
-phenoInfo(cmsRawObj)
-rawDT(cmsRawObj)
+files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)[1:2]
+colData <- DataFrame(sampClasses = rep(c("wild-type", "mutant"), each = 4))[1:2,]
+cmsRaw <- readMSdata(files = files, colData = colData, verbose = TRUE)
+colData(cmsRaw)
 }
 }

@@ -2,15 +2,14 @@
 \alias{getTIC}
 \title{Compute total ion chromatogram (TIC).}
 \usage{
-getTIC(peak.info)
+getTIC(object)
 }
 \arguments{
-\item{peak.info}{A list of spectrum information for every scan.}
+\item{object}{An object of class \code{CMSraw}.}
 }
 \value{
-A vector with length equal to the number of scans (equal to the
-  length of \code{peak.info}) containing the log2 sum of intensities
-  at each scan.
+A vector with length equal to the number of scans containing the log2
+sum of intensities at each scan.
 }
 \description{
 Computes TIC from parsed raw data. Intensities are on the log2 scale. This
@@ -20,8 +19,10 @@ can be computed after running \code{getPeakInfo}.
 if (require(mtbls2)) {
 data(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")
-file <- list.files(filepath, recursive = TRUE, full.names = TRUE)[1]
-pinfo <- getPeakInfo(file)
-tic <- getTIC(pinfo[[1]])
+files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)[1:2]
+colData <- DataFrame(files = files)
+cmsRaw <- readMSdata(files = files, colData = colData, verbose = TRUE)
+tic <- getTIC(cmsRaw)
+head(tic)
 }
 }
