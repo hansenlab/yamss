@@ -17,7 +17,7 @@ importFrom(grDevices, colorRampPalette)
 
 ## Other packages
 
-importFrom(S4Vectors, queryHits, subjectHits)
+importFrom(S4Vectors, queryHits, subjectHits, DataFrame)
 importMethodsFrom(S4Vectors, colMeans, colSums, do.call, head,
                   is.unsorted, rowMeans, rowSums, sapply, sort, t,
                   tail)
