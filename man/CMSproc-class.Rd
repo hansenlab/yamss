@@ -1,48 +1,37 @@
-\name{CMS-class}
+\name{CMSproc-class}
 \docType{class}
-\alias{CMS-class}
-\alias{getFileNames}
-\alias{getRawPeakInfo}
+\alias{CMSproc-class}
+\alias{phenoInfo}
+\alias{rawDT}
 \alias{densityEstimate}
 \alias{densityCutoff}
 \alias{densityQuantiles}
 \alias{peakBounds}
 \alias{peakQuants}
-\alias{show,CMS-method}
-\title{A class to hold mass spectrometry preprocessing information.}
+\alias{show,CMSproc-method}
+\title{A class to hold chromatography-mass spectrometry preprocessing information.}
 \description{
 This class transforms information from raw mass spectral files to a matrix
 of peak quantifications suitable for differential analysis. It first 
 performs background correction and retention time alignment of the raw 
 data. Next it performs weighted bivariate kernel density estimation to 
-detect peaks. Finally peak integration and differential analysis are
-performed.
+detect peaks.
 }
 
 \section{Slots}{
   \describe{
-    \item{\code{fileNames}:}{
-      a character vector of filepaths to the raw data.
+    \item{\code{phenoData}:}{
+      a \code{DataFrame} of phenotype and sample information.
     }
-    \item{\code{rtalign}:}{
-      logical - was retention time alignment performed?
-    }
-    \item{\code{rawPeakInfo}:}{
-      a list of raw spectral information for each scan in each sample.
-    }
-    \item{\code{rawPeakDT}:}{
+    \item{\code{rawDT}:}{
       a \code{data.table} of raw spectral information.
-    }
-    \item{\code{bgcorrDT}:}{
-      a \code{data.table} of background-corrected spectral information.
     }
     \item{\code{mzParams}:}{
       a list containing the minimum and maximum M/Z value and number of 
       scans in each sample.
     }
-    \item{\code{bgSmooths}:}{
-      a list containing M/Z region-specific smoothed background trends as 
-      a function of scan for each sample.
+    \item{\code{bgcorrDT}:}{
+      a \code{data.table} of background-corrected spectral information.
     }
     \item{\code{density}:}{
       a matrix with rows corresponding to M/Z values and columns 
@@ -54,19 +43,6 @@ performed.
     \item{\code{densityQuantiles}:}{
       a numeric vector containing the 100 percent quantiles of the
       nonzero density values.
-    }
-    \item{\code{alignments}:}{
-      a list of shifts for each sample in several M/Z regions that 
-      maximizes the correlation between the extracted ion chromatograms 
-      in those regions.
-    }
-    \item{\code{eicsRaw}:}{
-      a list of extracted ion chromatograms (EICs) corresponding to each 
-      peak for each sample.
-    }
-    \item{\code{eicsImputed}:}{
-      a list of interpolated EICs used for quantification. This is only 
-      computed when retention time alignment is not performed.
     }
     \item{\code{peakBounds}:}{
       a matrix of information about the detected peaks : M/Z bounds,
@@ -91,7 +67,7 @@ performed.
     }
     \item{\code{updatePeaks}:}{
       Given a new threshold value for the density estimate, repeats peak 
-      detection and quantification and provides an updated \code{CMS} object.
+      detection and quantification and provides an updated \code{CMSproc} object.
     }
   }
 }
@@ -100,23 +76,26 @@ performed.
   We have the following accessor functions:
 
   \describe{
-    \item{\code{getFileNames}:}{
-      gets filenames of raw data.
+    \item{\code{phenoInfo}:}{
+      Gets the \code{DataFrame} containing phenotype and sample information.
+    }
+    \item{\code{rawDT}:}{
+      Gets the \code{data.table} containing the raw spectral data.
     }
     \item{\code{densityEstimate}:}{
-      gets the matrix containing the density estimate.
+      Gets the matrix containing the density estimate.
     }
     \item{\code{densityCutoff}:}{
-      gets the value used to threshold the density for peak calling.
+      Gets the value used to threshold the density for peak calling.
     }
     \item{\code{densityQuantiles}:}{
-      gets the quantiles of the nonzero values in the density estimate.
+      Gets the quantiles of the nonzero values in the density estimate.
     }
     \item{\code{peakBounds}:}{
-      gets the M/Z bounds, scan bounds, and ID numbers for detected peaks.
+      Gets the M/Z bounds, scan bounds, and ID numbers for detected peaks.
     }
     \item{\code{peakQuants}:}{
-      gets the matrix of peak quantifications (rows: peaks, columns: samples).
+      Gets the matrix of peak quantifications (rows: peaks, columns: samples).
     }
   }
 }
@@ -127,6 +106,6 @@ bounds <- cbind(mzmin = seq(from = 100, to = 1100, length.out = 5000),
                 mzmax = seq(from = 100, to = 1100, length.out = 5000) + 0.1,
                 scan.min = rep(10,5000), scan.max = rep(20, 5000),
                 blobnum = 1:5000)
-cmsobj <- new("CMS", peakQuants = quants, peakBounds = bounds)
+cmsobj <- new("CMSproc", peakQuants = quants, peakBounds = bounds)
 head(peakQuants(cmsobj))
 }

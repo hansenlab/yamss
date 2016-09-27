@@ -3,12 +3,12 @@
 \alias{updatePeaks}
 \title{Process raw data to obtain quantifications.}
 \usage{
-bakedpi(files, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1),
+bakedpi(cmsRaw, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1),
   outfileDens = NULL, dortalign = FALSE, mzsubset = NULL, verbose = TRUE)
 updatePeaks(cms, cutoff)
 }
 \arguments{
-\item{files}{A character vector of filepaths to the raw data}
+\item{cmsRaw}{An object of class \code{CMSraw}.}
 
 \item{dbandwidth}{A length-2 vector indicating the kernel density bandwidth
 in the M/Z and retention time (scan) directions. Default: \code{c(0.005,10)}}
@@ -33,7 +33,7 @@ process. \code{NULL} otherwise.}
 the density estimate.}
 }
 \value{
-An object of class \code{CMS} containing preprocessing information.
+An object of class \code{CMSproc} containing preprocessing information.
 }
 \description{
 The \code{bakedpi} Performs background correction, retention time
@@ -59,7 +59,9 @@ if (require(mtbls2)) {
 data(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")
 files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)
-cmsobj <- bakedpi(files = files, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
+pheno <- DataFrame(sampClasses = rep(c("wild-type", "mutant"), each = 4))
+cmsRawObj <- readMSdata(files = files, pheno = pheno, verbose = TRUE)
+cmsProcObj <- bakedpi(files = files, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
                   outfileDens = NULL, dortalign = TRUE, mzsubset = c(500, 520))
 }
 }

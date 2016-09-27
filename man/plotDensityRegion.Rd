@@ -5,7 +5,7 @@
 plotDensityRegion(cms, mzrange, scanrange)
 }
 \arguments{
-\item{cms}{An object of class \code{CMS}.}
+\item{cms}{An object of class \code{CMSproc}.}
 
 \item{mzrange}{A length-2 vector indicating the M/Z range to plot.}
 
@@ -26,6 +26,6 @@ densmat <- matrix(rnorm(600), nrow = 20, ncol = 30)
 colnames(densmat) <- 1:ncol(densmat)
 rownames(densmat) <- seq(350, by = 0.005, length.out = nrow(densmat))
 densityQuantiles <- quantile(densmat, seq(from = 0, to = 1, by = 0.001))
-cmsobj <- new("CMS", density = densmat, densityQuantiles = densityQuantiles)
+cmsobj <- new("CMSproc", density = densmat, densityQuantiles = densityQuantiles)
 plotDensityRegion(cmsobj, mzrange = c(350.01, 350.03), scanrange = c(10,20))
 }

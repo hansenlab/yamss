@@ -33,6 +33,7 @@ setMethod("show", signature(object = "CMSproc"),
     # FIXME some more information
 })
 
+## Convenience functions
 .mzMin <- function(object) {
     object@mzParams[["mzMin"]]
 }
@@ -45,25 +46,39 @@ setMethod("show", signature(object = "CMSproc"),
     object@phenoData[, "sample"]
 }
 
-## FIMXE: need some phenoData extractor
+## Accessors for CMSraw and CMSproc
+phenoInfo <- function(object) {
+    stopifnot(is(object, "CMSraw") | is(object, "CMSproc"))
+    object@phenoData
+}
 
+rawDT <- function(object) {
+    stopifnot(is(object, "CMSraw") | is(object, "CMSproc"))
+    object@rawDT
+}
 
+## Accessors for CMSproc
 densityEstimate <- function(object) {
+    stopifnot(is(object, "CMSproc"))
     object@density
 }
 
 densityCutoff <- function(object) {
+    stopifnot(is(object, "CMSproc"))
     object@densityCutoff
 }
 
 densityQuantiles <- function(object) {
+    stopifnot(is(object, "CMSproc"))
     object@densityQuantiles
 }
 
 peakBounds <- function(object) {
+    stopifnot(is(object, "CMSproc"))
     object@peakBounds
 }
 
 peakQuants <- function(object) {
+    stopifnot(is(object, "CMSproc"))
     object@peakQuants
 }

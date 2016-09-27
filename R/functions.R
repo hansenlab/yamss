@@ -26,6 +26,7 @@ getTIC <- function(peak.info) {
 }
 
 getEICS <- function(object, mzranges) {
+    stopifnot(is(object, "CMSraw") | is(object, "CMSproc"))
     ## Convert mzranges to an IRanges if a matrix
     if (class(mzranges) != "IRanges") {
         mzranges <- IRanges(start = as.integer(mzranges[,1]*1e5), 
@@ -56,7 +57,7 @@ getEICS <- function(object, mzranges) {
 }
 
 diffrep <- function(cms, classes) {
-    stopifnot(is(cms, "CMS"))
+    stopifnot(is(cms, "CMSproc"))
     quants <- cms@peakQuants
     df <- data.frame(classes = classes)
     design <- model.matrix(~classes, data = df)
@@ -67,7 +68,7 @@ diffrep <- function(cms, classes) {
 }
 
 plotDensityRegion <- function(cms, mzrange, scanrange) {
-    stopifnot(is(cms, "CMS"))
+    stopifnot(is(cms, "CMSproc"))
     .isArgumentTwoVector(mzrange)
     .isArgumentTwoVector(scanrange)
     if (nrow(cms@density)==0) {
@@ -87,7 +88,7 @@ plotDensityRegion <- function(cms, mzrange, scanrange) {
 }
 
 updatePeaks <- function(cms, cutoff) {
-    stopifnot(is(cms, "CMS"))
+    stopifnot(is(cms, "CMSproc"))
     if (nrow(cms@density)==0) {
         stop("cms cmsect must have a density estimate")
     }
