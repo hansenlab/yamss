@@ -6,7 +6,7 @@ setClass("CMSraw",
          )
 
 setClass("CMSproc",
-         slots = c(raw = "CMSraw",
+         slots = c(cmsRaw = "CMSraw",
                    rtalign = "logical",
                    bgcorrDT = "data.frame",
                    density = "matrix",
