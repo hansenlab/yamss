@@ -1,26 +1,28 @@
-setClass("CMS",
-         slots = c(fileNames = "character",
-                   rtalign = "logical",
-                   rawPeakInfo = "list",
+setClass("CMSraw",
+         slots = c(phenoData = "DataFrame",
                    rawPeakDT = "data.frame",
+                   mzParams = "list"
+                   )
+         )
+
+setClass("CMSproc",
+         slots = c(raw = "CMSraw",
+                   rtalign = "logical",
                    bgcorrDT = "data.frame",
-                   mzParams = "list",
-                   bgSmooths = "list",
                    density = "matrix",
                    densityCutoff = "numeric",
                    densityQuantiles = "numeric",
-                   alignments = "list",
-                   eicsRaw = "list",
-                   eicsImputed = "list",
                    peakBounds = "matrix",
                    peakQuants = "matrix")
          )
 
-setMethod("show", signature(object = "CMS"),
+setMethod("show", signature(object = "CMSraw"),
           function(object) {
+            cat(sprintf("An object of class CMSraw containing %i files", length(obj@fileNames)))
+            cat(sprintf("M/Z: %f - %f. %i scans.", object@mzParams$minMZraw, object@mzParams$maxMZraw, object@mzParams$maxScan))
 })
 
-getFileNames <- function(obj) {
+fileNames <- function(obj) {
     obj@fileNames
 }
 

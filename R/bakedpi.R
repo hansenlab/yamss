@@ -1,4 +1,3 @@
-
 ## Steps
 ## 1. Read raw data
 ## 2. Background correction
@@ -9,6 +8,41 @@
 ## 7. Get XICs
 ## 8. Quantify
 ## 9. Differential analysis
+
+readRaw <- function(files, classes, pheno = NULL, mzsubset = NULL, verbose = FALSE) {
+    if(verbose) {
+        message(sprintf("[readRaw]: Reading %i files", length(files)))
+    }
+    obj <- new("CMSraw")
+    rawPeakInfo <- getPeakInfo(files)
+    ## Make raw data matrix and data.table
+    rawdatamat <- do.call(rbind, lapply(seq_along(rawPeakInfo), function(s) {
+                                     cbind(do.call(rbind, lapply(seq_along(rawPeakInfo[[s]]), function(scan) {
+                                                              cbind(rawPeakInfo[[s]][[scan]], scan)
+                                                          })), s)
+                                 }))
+    colnames(rawdatamat) <- c("mz", "intensity", "scan", "sample")
+    rawPeakDT <- data.table(mz = as.integer(rawdatamat[,"mz"]*1e5),
+                     intensity = rawdatamat[,"intensity"],
+                     scan = rawdatamat[,"scan"],
+                     sample = rawdatamat[,"sample"])
+    ## Subset if specified
+    setkey(rawPeakDT, mz, scan)
+    if (!is.null(mzsubset)) {
+        mzseq <- seq(as.integer(mzsubset[1]*1e5), as.integer(mzsubset[2]*1e5))
+        rawPeakDT <- rawPeakDT[.(mzseq), nomatch = 0]
+    }
+    ## Get minimum and maximum M/Zs and scan numbers
+    obj@mzParams <- list(maxScan = max(rawPeakDT[,scan]),
+                         minMZraw = min(rawPeakDT[,mz])/1e5,
+                         maxMZraw = max(rawPeakDT[,mz])/1e5,
+                         minMZ = 10*floor(min(rawPeakDT[,mz])/1e5/10),
+                         maxMZ = 10*ceiling(max(rawPeakDT[,mz])/1e5/10))
+    obj@rawPeakDT <- rawPeakDT
+    ## Make phenotype DataFrame
+    obj@phenoData <- DataFrame(pheno, sample = seq_along(files), files = files)
+    return(obj)
+}
 
 readRawDataAsDataTable <- function(obj, mzsubset = NULL, verbose = FALSE) {
     if(verbose) {
