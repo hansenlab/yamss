@@ -146,16 +146,17 @@ backgroundCorrection <- function(cmsProc, verbose = FALSE) {
     return(cmsProc)
 }
 
-rtAlignment <- function(obj, verbose = FALSE) {
-    mzParams <- obj@mzParams
-    DT <- obj@rawPeakDT
-    DTbgcorr <- obj@bgcorrDT
+rtAlignment <- function(cmsProc, verbose = FALSE) {
+    cmsRaw <- cmsProc@cmsRaw
+    mzParams <- cmsRaw@mzParams
+    rawPeakDT <- cmsRaw@rawPeakDT
+    bgcorrDT <- cmsProc@bgcorrDT
     if(verbose) {
         message("[rtAlignment] Get rough M/Z regions to align")
     }
     ## Get density of M/Z values
     ## This density will be thresholded to yield M/Z regions
-    mzdens <- density(DTbgcorr[,mz]/1e5, weights = DTbgcorr[,intensity]/sum(DTbgcorr[,intensity]), n = 2^ceiling(log2(nrow(DTbgcorr))), bw = 0.005)
+    mzdens <- density(bgcorrDT[,mz]/1e5, weights = bgcorrDT[,intensity]/sum(bgcorrDT[,intensity]), n = 2^ceiling(log2(nrow(bgcorrDT))), bw = 0.005)
     ## Get M/Z regions for a variety of quantile cutoffs
     qdens <- quantile(mzdens$y, seq(0.5,0.99,0.01))
     mzbounds <- lapply(qdens, function(cutoff) {
@@ -175,8 +176,8 @@ rtAlignment <- function(obj, verbose = FALSE) {
         message("[rtAlignment] Get XICs for these regions")
     }
     ptime1 <- proc.time()
-    eics <- getEICS(cms = obj, mzranges = irmzr)
-    scans <- 1:obj@mzParams$maxScan
+    eics <- getEICS(cmsRaw = cmsRaw, mzranges = irmzr)
+    scans <- 1:cmsRaw@mzParams$maxScan
     eicsImputed <- lapply(eics, function(x) {
         do.call(cbind, lapply(1:ncol(x), function(col) {
                            bool <- x[,col] > 1e-6
@@ -193,13 +194,13 @@ rtAlignment <- function(obj, verbose = FALSE) {
     }
     ptime1 <- proc.time()
     shifts <- -20:20
-    DTbgcorr[, scanorig := scan]
-    DT[, scanorig := scan]
+    bgcorrDT[, scanorig := scan]
+    rawPeakDT[, scanorig := scan]
     shiftsList <- lapply(seq_along(irmzr), function(i) {
         eicmat <- eics[[i]]
         eicimpmat <- eicsImputed[[i]]
         refsamp <- which.max(colSums(eicmat))
-        bestShiftBySample <- sapply(seq_along(obj@fileNames), function(s) {
+        bestShiftBySample <- sapply(seq_along(cmsRaw@phenoData$files), function(s) {
             if (s==refsamp) {
                 return(0)
             }
@@ -229,33 +230,32 @@ rtAlignment <- function(obj, verbose = FALSE) {
         message(sprintf("[rtAlignment]  .. done in %.1f secs.", stime))
         message("[rtAlignment] Remap scans")
     }
-    obj@alignments <- shiftsList
     ptime1 <- proc.time()
-    setkey(DTbgcorr, mz, sample)
-    setkey(DT, mz, sample)
+    setkey(bgcorrDT, mz, sample)
+    setkey(rawPeakDT, mz, sample)
     for (i in seq_along(irmzr)) {
         mzseq <- seq(start(irmzr[i]), end(irmzr[i]))
-        for (s in seq_along(obj@fileNames)) {
-            DT[CJ(mzseq,s), shift := shiftsList[[i]][s], nomatch = 0]
-            DTbgcorr[CJ(mzseq,s), shift := shiftsList[[i]][s], nomatch = 0]
+        for (s in seq_along(cmsRaw@pheno$files)) {
+            rawPeakDT[CJ(mzseq,s), shift := shiftsList[[i]][s], nomatch = 0]
+            bgcorrDT[CJ(mzseq,s), shift := shiftsList[[i]][s], nomatch = 0]
         }
     }
-    DT[, shift := ifelse(is.na(shift), 0, shift)]
-    DTbgcorr[, shift := ifelse(is.na(shift), 0, shift)]
-    DT[, scan := scan + shift]
-    DTbgcorr[, scan := scan + shift]
-    DT[, shift := NULL]
-    DTbgcorr[, shift := NULL]
-    DT <- DT[scan >= 1 & scan <= obj@mzParams$maxScan]
-    DTbgcorr <- DTbgcorr[scan >= 1 & scan <= obj@mzParams$maxScan]
+    rawPeakDT[, shift := ifelse(is.na(shift), 0, shift)]
+    bgcorrDT[, shift := ifelse(is.na(shift), 0, shift)]
+    rawPeakDT[, scan := scan + shift]
+    bgcorrDT[, scan := scan + shift]
+    rawPeakDT[, shift := NULL]
+    bgcorrDT[, shift := NULL]
+    rawPeakDT <- rawPeakDT[scan >= 1 & scan <= cmsRaw@mzParams$maxScan]
+    bgcorrDT <- bgcorrDT[scan >= 1 & scan <= cmsRaw@mzParams$maxScan]
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) {
         message(sprintf(".. done in %.1f secs.", stime))
     }
-    obj@rawPeakDT <- DT
-    obj@bgcorrDT <- DTbgcorr
-    return(obj)
+    cmsProc@rawPeakDT <- rawPeakDT
+    cmsProc@bgcorrDT <- bgcorrDT
+    return(cmsProc)
 }
 
 densityEstimation <- function(obj, dgridstep = dgridstep, dbandwidth = dbandwidth, 
@@ -617,7 +617,7 @@ bakedpi <- function(cmsRaw, dbandwidth = c(0.005, 10),
     cmsProc <- backgroundCorrection(cmsProc = cmsProc, verbose = subverbose)
 
     if (dortalign) {
-        obj <- rtAlignment(obj = obj, verbose = subverbose)
+        cmsProc <- rtAlignment(cmsProc = cmsProc, verbose = subverbose)
     }
 
     if(verbose) {
