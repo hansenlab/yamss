@@ -1,6 +1,6 @@
 utils::globalVariables(c("peaknum", "mzmin", "mzmax", "weight", "bg", "gmz",
-                         "mz", "intensity",
-                         "eic", "scanmax", "scanmin", "scanorig", "N", "."))
+                         "mz", "intensity", "eic", "tic", "scanmax", 
+                         "scanmin", "scanorig", "N", "."))
 
 
 .isArgumentTwoVector <- function(vec) {
