@@ -2,7 +2,7 @@ getTIC <- function(object, sample) {
     stopifnot(is(object, "CMSraw"))
     rawDT <- .rawDT(object)
     setkey(rawDT, scan)
-    ticDT <- rawDT[sample==sample, tic = log2(sum(intensity)+1), by = scan]
+    ticDT <- rawDT[sample==sample, .(tic = log2(sum(intensity)+1)), by = scan]
     tic <- rep(0, .maxScan(object))
     tic[ticDT[,scan]] <- ticDT[,tic]
     return(tic)

@@ -15,7 +15,8 @@ sum of intensities at each scan.
 }
 \description{
 Computes total ion chromatogram (TIC) for a single sample. Intensities 
-are on the log2 scale. This requires a .
+are on the log2 scale. This requires a \code{CMSraw} object, typically 
+produced from \code{readMSdata}.
 }
 \examples{
 if (require(mtbls2)) {
