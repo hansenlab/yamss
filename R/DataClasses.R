@@ -89,21 +89,26 @@ densityEstimate <- function(object) {
 }
 
 densityCutoff <- function(object) {
-    stopifnot(is(object, "CMSproc"))
-    object@densityCutoff
+    stopifnot(is(object, "CMSslice"))
+    metadata(object)[["densityCutoff"]]
 }
 
 densityQuantiles <- function(object) {
-    stopifnot(is(object, "CMSproc"))
-    object@densityQuantiles
+    stopifnot(is(object, "CMSproc") | is(object, "CMSslice"))
+    if (is(object, "CMSproc")) {
+        return(object@densityQuantiles)
+    }
+    if (is(object, "CMSslice")) {
+        return(metadata(object)[["densityQuantiles"]])
+    }
 }
 
 peakBounds <- function(object) {
-    stopifnot(is(object, "CMSproc"))
-    object@peakBounds
+    stopifnot(is(object, "CMSslice"))
+    rowData(object)
 }
 
 peakQuants <- function(object) {
-    stopifnot(is(object, "CMSproc"))
-    object@peakQuants
+    stopifnot(is(object, "CMSslice"))
+    assay(object, "peakQuants")
 }
