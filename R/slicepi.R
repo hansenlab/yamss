@@ -102,16 +102,16 @@ computePeakBounds <- function(densmat, dcutoff, verbose = FALSE) {
     return(blobs)
 }
 
-getXICsAndQuantifyWithRetentionTime <- function(object, verbose = FALSE) {
+getEICsAndQuantify <- function(object, peakBounds, verbose = FALSE) {
     if(verbose) {
-        message("[getXICsAndQuantifyWithRetentionTime] compute XICs")
+        message("[getEICsAndQuantify] compute EICs")
     }
     stopifnot(is(object, "CMSproc"))
     rawDT <- .rawDT(object)
     setkey(rawDT, mz, scan)
     ptime1 <- proc.time()
-    eicsRaw <- lapply(1:nrow(object@peakBounds), function(i) {
-        mzseq <- seq(as.integer(object@peakBounds[i,"mzmin"]*1e5), as.integer(object@peakBounds[i,"mzmax"]*1e5))
+    eicsRaw <- lapply(1:nrow(peakBounds), function(i) {
+        mzseq <- seq(as.integer(peakBounds[i,"mzmin"]*1e5), as.integer(peakBounds[i,"mzmax"]*1e5))
         dt <- rawDT[.(mzseq), nomatch = 0]
         dt <- dt[, eic := log2(max(intensity)+1), by = .(scan, sample)]
         dup <- duplicated(dt[,.(scan,sample)])
@@ -130,13 +130,13 @@ getXICsAndQuantifyWithRetentionTime <- function(object, verbose = FALSE) {
     stime <- (ptime2 - ptime1)[3]
     if(verbose) {
         message(sprintf(".. done in %.1f secs.", stime))
-        message("[getXICsAndQuantifyWithRetentionTime] quantify")
+        message("[getEICsAndQuantify] quantify")
     }
     scanstep <- 0.01
     scanseq <- seq(0, .maxScan(object), scanstep)
     ptime1 <- proc.time()
     quantmat <- do.call(rbind, lapply(seq_along(eicsRaw), function(i) {
-                                   wh <- which.min(abs(scanseq-object@peakBounds[i,"scanmin"])):which.min(abs(scanseq-object@peakBounds[i,"scanmax"]))
+                                   wh <- which.min(abs(scanseq-peakBounds[i,"scanmin"])):which.min(abs(scanseq-peakBounds[i,"scanmax"]))
                                    sapply(eicsRaw[[i]], function(eic) {
                                        f <- (2^eic(scanseq))-1
                                        return(sum(f[wh])*scanstep)
@@ -145,55 +145,8 @@ getXICsAndQuantifyWithRetentionTime <- function(object, verbose = FALSE) {
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) {
-        message(sprintf("[getXICsAndQuantifyWithRetentionTime]  .. done in %.1f secs.", stime))
+        message(sprintf("[getEICsAndQuantify]  .. done in %.1f secs.", stime))
     }
-    object@peakQuants <- quantmat
-    return(object)
-}
-
-getXICsAndQuantifyWithoutRetentionTime <- function(object, verbose = FALSE) {
-    if(verbose) {
-        message("[getXICsAndQuantifyWithoutRetentionTime] compute XICs")
-    }
-    stopifnot(is(object, "CMSproc"))
-    ptime1 <- proc.time()
-    irmzr <- IRanges(start = as.integer(object@peakBounds[,"mzmin"]*1e5), 
-                     end = as.integer(object@peakBounds[,"mzmax"]*1e5))
-    eicsRaw <- getEICS(object, mzranges = irmzr)
-    ptime2 <- proc.time()
-    stime <- (ptime2 - ptime1)[3]
-    if(verbose) {
-        message(sprintf(".. done in %.1f secs.", stime))
-    }
-    scans <- 1:.maxScan(object)
-
-    if(verbose) {
-        message("[getXICsAndQuantifyWithoutRetentionTime] Impute")
-    }
-    ptime1 <- proc.time()
-    eicsImputed <- lapply(eicsRaw, function(x) {
-        do.call(cbind, lapply(1:ncol(x), function(col) {
-                           bool <- x[,col] > 1e-6
-                           if (sum(bool) < 2)
-                               return(x[,col])
-                           approx(scans[bool], x[bool,col], xout = scans, rule = 2)$y
-                       }))
-    })
-    ptime2 <- proc.time()
-    stime <- (ptime2 - ptime1)[3]
-    if(verbose) {
-        message(sprintf("[getXICsAndQuantifyWithoutRetentionTime]  .. done in %.1f secs.", stime))
-    }
-    
-    if(verbose) {
-        message("[getXICsAndQuantifyWithoutRetentionTime] quantify")
-    }
-    quantmat <- do.call(rbind, lapply(seq_along(eicsImputed), function(i) {
-                                   mat <- eicsImputed[[i]][object@peakBounds[i, "scanmin"]:min(c(object@peakBounds[i, "scanmax"],
-                                                                                                  .maxScan(object))),,drop = FALSE]
-                                   mat <- (2^mat)-1
-                                   colSums(mat)
-                               }))
     object@peakQuants <- quantmat
     return(object)
 }
@@ -221,17 +174,18 @@ slicepi <- function(cmsProc, cutoff = NULL, verbose = TRUE) {
     if(verbose) {
         message("[slicepi] Computing peak bounds")
     }
-    peakBounds <- computePeakBounds(densmat = dmat, dcutoff = object@densityCutoff, verbose = subverbose)
+    peakBounds <- computePeakBounds(densmat = densityEstimate(cmsProc), dcutoff = metadata[["densityCutoff"]], verbose = subverbose)
 
-    ## Get XICs and quantifications - methods differ if RT alignment was performed
+    ## Get EICs and quantifications
     if(verbose) {
         message("[slicepi] Quantifying peaks")
     }
-    if (dortalign) {
-        object <- getXICsAndQuantifyWithRetentionTime(object = object, verbose = subverbose)
-    } else {
-        object <- getXICsAndQuantifyWithoutRetentionTime(object = object, verbose = subverbose)
-    }
+    peakQuants <- getEICsAndQuantify(object = cmsProc, peakBounds = peakBounds, verbose = subverbose)
+
+    ## Create SummarizedExperiment container
+    object <- new("CMSslice", assays = list(peakQuants = peakQuants),
+                              rowData = DataFrame(peakBounds),
+                              colData = colData(cmsProc), metadata = metadata)
     
     return(object)
 }
