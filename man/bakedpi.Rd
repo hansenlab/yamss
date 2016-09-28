@@ -36,10 +36,11 @@ the density estimate.}
 An object of class \code{CMSproc} containing preprocessing information.
 }
 \description{
-The \code{bakedpi} Performs background correction, retention time
-correction, peak detection, and differential analysis. As part of this
-analysis, a two-dimenstional density is computed and thresholded (at a
-data-driven threshold).
+The \code{bakedpi} method stands for bivariate approximate kernel density 
+estimation for peak identification. It performs background correction, 
+retention time correction, and peak detection. As part of this analysis, 
+a two-dimenstional density is computed and thresholded (at a data-driven 
+threshold).
 
 The \code{updatePeaks} function allows a user to change the density
 threshold as described in the previous paragraph, to a user-defined
@@ -51,7 +52,8 @@ quantified again.
 optional retention time correction step follows in which M/Z region-specific
 shifts are computed to align the raw data. Next the two-dimensional density
 estimate is computed. A cutoff is determined to call peaks which are then
-quantified and run through a differential analysis pipeline.
+quantified. The primary goal of \code{bakedpi} is to produce quantifications 
+that provide powerful differential analysis.
 }
 \examples{
 \dontrun{

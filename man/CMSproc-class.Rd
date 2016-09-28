@@ -1,7 +1,6 @@
 \name{CMSproc-class}
 \docType{class}
 \alias{CMSproc-class}
-\alias{rawDT}
 \alias{densityEstimate}
 \alias{densityCutoff}
 \alias{densityQuantiles}
@@ -81,9 +80,6 @@ detect peaks.
   \describe{
     \item{\code{colData}:}{
       Gets the \code{DataFrame} containing phenotype and sample information.
-    }
-    \item{\code{rawDT}:}{
-      Gets the \code{data.table} containing the raw spectral data.
     }
     \item{\code{densityEstimate}:}{
       Gets the matrix containing the density estimate.

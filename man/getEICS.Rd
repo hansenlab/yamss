@@ -29,7 +29,7 @@ data(mtbls2)
 ## Same example as in example(bakedpi) and the vignette
 filepath <- file.path(find.package("mtbls2"), "mzData")
 files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)
-colData <- DataFrame(sampClasses = rep(c("wild-type", "mutant"), each = 4))
+colData <- DataFrame(group = rep(c("wild-type", "mutant"), each = 4))
 cmsRaw <- readMSdata(files = files, colData = colData, verbose = TRUE)
 mzranges <- rbind(c(500.01, 500.03), c(511.44, 511.46))
 eicList <- getEICS(cmsRaw, mzranges)
