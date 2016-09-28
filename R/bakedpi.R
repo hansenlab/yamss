@@ -24,11 +24,11 @@
 .subsetByMZ <- function(object, mzsubset = NULL) {
     if(is.null(mzsubset))
         return(object)
-    rawDT <- object@rawDT
+    rawDT <- .rawDT(object)
     setkey(rawDT, mz, scan)
     mzseq <- seq(as.integer(mzsubset[1]*1e5), as.integer(mzsubset[2]*1e5))
     object@rawDT <- rawDT[.(mzseq), nomatch = 0]
-    object@mzParams <- .setMZParams(object@rawDT)
+    object@mzParams <- .setMZParams(.rawDT(object))
     object
 }
 
@@ -74,7 +74,7 @@ readMSdata <- function(files, colData = NULL, mzsubset = NULL, verbose = FALSE) 
 backgroundCorrection <- function(object, verbose = FALSE) {
     stopifnot(is(object, "CMSraw"))
     mzParams <- object@mzParams
-    rawDT <- object@rawDT
+    rawDT <- .rawDT(object)
     setkey(rawDT, mz, scan, sample)
     mzbreaks <- c(seq(mzParams$minMZ, mzParams$maxMZ, 10), mzParams$maxMZ)
     scanbreaks <- seq(1, mzParams$maxScan, 40)
@@ -183,7 +183,7 @@ backgroundCorrection <- function(object, verbose = FALSE) {
 rtAlignment <- function(object, verbose = FALSE) {
     stopifnot(is(object, "CMSproc"))
     mzParams <- object@mzParams
-    rawDT <- object@rawDT
+    rawDT <- .rawDT(object)
     bgcorrDT <- object@bgcorrDT
     if(verbose) {
         message("[rtAlignment] Get rough M/Z regions to align")
@@ -539,7 +539,7 @@ getXICsAndQuantifyWithRetentionTime <- function(object, verbose = FALSE) {
     }
     stopifnot(is(object, "CMSproc"))
     mzParams <- object@mzParams
-    rawDT <- object@rawDT
+    rawDT <- .rawDT(object)
     setkey(rawDT, mz, scan)
     ptime1 <- proc.time()
     eicsRaw <- lapply(1:nrow(object@peakBounds), function(i) {
