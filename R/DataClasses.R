@@ -10,17 +10,13 @@ setClass("CMSraw",
          )
          )
 
-
 setClass("CMSproc",
          contains = "CMSraw",
          representation( # FIXME: we might potentially want to store arguments of the call that made the object
              rtAlign = "logical", 
              bgcorrDT = "data.table",
              density = "matrix",
-             densityCutoff = "numeric",
-             densityQuantiles = "numeric",
-             peakBounds = "matrix",
-             peakQuants = "matrix"),
+             densityQuantiles = "numeric"),
          prototype = prototype(
              rawDT = data.table(),
              colData = DataFrame(),
@@ -28,10 +24,17 @@ setClass("CMSproc",
              rtAlign = FALSE,
              bgcorrDT = data.table(),
              density = matrix(),
-             densityCutoff = numeric(),
              densityQuantiles = numeric(),
-             peakBounds = matrix(),
-             peakQuants = matrix()
+         )
+         )
+
+setClass("CMSslice",
+         contains = "SummarizedExperiment",
+         prototype = prototype(
+             assays = list(),
+             rowData = DataFrame(),
+             colData = DataFrame(),
+             metadata = list()
          )
          )
 
