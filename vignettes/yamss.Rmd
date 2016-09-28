@@ -17,7 +17,7 @@ output:
 
 # Introduction
 
-The `r Biocpkg("yamss")` package provides tools to preprocess raw mass spectral data files arising from metabolomics experiments with the primary goal of providing high-quality differential analysis. Currently, `r Biocpkg("yamss")` implements a preprocessing method "bakedpi".  
+The `r Biocpkg("yamss")` (yet another mass spectrometry software) package provides tools to preprocess raw mass spectral data files arising from metabolomics experiments with the primary goal of providing high-quality differential analysis. Currently, `r Biocpkg("yamss")` implements a preprocessing method "bakedpi", which stands for bivariate approximate kernel density estimation for peak identification.
 
 Alternatives to this package include  `r Biocpkg("xcms")` [@xcms] (available on Bioconductor) and MZMine 2 [@mzmine].  These packages  also provide preprocessing functionality but focus more on feature detection and alignment in individual samples.  The input data to `r Biocpkg("yamss")` are standard metabolomics mass spectral files which can be read by `r Biocpkg("mzR")`.
 
