@@ -5,7 +5,7 @@
 diffrep(cms, classes)
 }
 \arguments{
-\item{cms}{An object of class \code{CMSproc}.}
+\item{cms}{An object of class \code{CMSslice}.}
 
 \item{classes}{A character vector of class labels for the samples.}
 }
@@ -15,7 +15,7 @@ A \code{data.frame} containing differential analysis information
 }
 \description{
 Performs differential abundance analysis on quantification information 
-in a \code{CMSproc} object.
+in a \code{CMSslice} object.
 }
 \details{
 Differential analysis is performed using the \code{limma} package which
@@ -23,7 +23,7 @@ uses empirical Bayes methods in the estimation of feature-wise variances.
 }
 \examples{
 quantmat <- matrix(rnorm(12*5000), nrow = 5000, ncol = 12)
-cmsobj <- new("CMSproc", peakQuants = quantmat)
+cmsobj <- new("CMSslice", assays = list(peakQuants = quantmat))
 classes <- rep(c("case", "control"), each = 6)
 difftab <- diffrep(cmsobj, classes)
 }

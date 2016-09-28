@@ -40,8 +40,8 @@ getEICS <- function(object, mzranges) {
 }
 
 diffrep <- function(cms, classes) {
-    stopifnot(is(cms, "CMSproc"))
-    quants <- cms@peakQuants
+    stopifnot(is(cms, "CMSslice"))
+    quants <- peakQuants(cms)
     df <- data.frame(classes = classes)
     design <- model.matrix(~classes, data = df)
     fit <- lmFit(log2(quants + 1), design = design)
