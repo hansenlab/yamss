@@ -81,7 +81,7 @@ The output of `slicepi()` is an instance of class `CMSslice` and contains the pe
 We can access the differential analysis report with `diffrep()`. This is a convenience function, similar to `diffreport()` from the `r Biocpkg("xcms")` package.  In our case it uses `r Biocpkg("limma")` to do differential analysis; the output of `diffrep()` is basically `topTable()` from `r Biocpkg("limma")`.
 
 ```{r}
-dr <- diffrep(cmsProc, classes = classes)
+dr <- diffrep(cmsSlice, classes = classes)
 head(dr)
 ```
 
@@ -95,14 +95,14 @@ topPeaks
 We can access the peak bound information with `peakBounds()` and select the rows corresponding to `topPeaks`.
 
 ```{r}
-bounds <- peakBounds(cmsProc)
+bounds <- peakBounds(cmsSlice)
 idx <- match(topPeaks, bounds[,"peaknum"])
 bounds[idx,]
 ```
 
-# Information contained in a CMS object
+# Information contained in a CMSproc object
 
-In addition to differential analysis results, `CMSproc` objects contain information useful in exploring your data.
+`CMSproc` objects contain information useful in exploring your data.
 
 ## Density estimate
 
@@ -123,13 +123,13 @@ plotDensityRegion(cmsProc, mzrange = mzrange + c(-0.5,0.5), scanrange = scanrang
 Peaks are called by thresholding the density estimate. If we wish to investigate the impact of varying this cutoff, we can use `densityCutoff` to obtain the original cutoff and `updatePeaks()` to re-call peaks and quantify them. Quantiles of the non-zero density values are also available via `densityQuantiles()`.
 
 ```{r}
-cmsProc2 <- updatePeaks(cmsProc, densityCutoff(cmsProc)*0.99)
+cmsSlice2 <- slicepi(cmsProc, densityCutoff(cmsProc)*0.99)
 dqs <- densityQuantiles(cmsProc)
 head(dqs)
-cmsProc3 <- updatePeaks(cmsProc, dqs["98.5%"])
+cmsSlice3 <- slicepi(cmsProc, dqs["98.5%"])
 nrow(peakBounds(cmsProc)) # Number of peaks detected - original
-nrow(peakBounds(cmsProc2)) # Number of peaks detected - updated
-nrow(peakBounds(cmsProc3)) # Number of peaks detected - updated
+nrow(peakBounds(cmsSlice2)) # Number of peaks detected - updated
+nrow(peakBounds(cmsSlice3)) # Number of peaks detected - updated
 ```
 
 # Sessioninfo
