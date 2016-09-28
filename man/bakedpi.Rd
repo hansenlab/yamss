@@ -1,6 +1,6 @@
 \name{bakedpi}
 \alias{bakedpi}
-\title{Process raw data to obtain quantifications.}
+\title{Process raw data to compute density estimate.}
 \usage{
 bakedpi(cmsRaw, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1),
   outfileDens = NULL, dortalign = FALSE, mzsubset = NULL, verbose = TRUE)
