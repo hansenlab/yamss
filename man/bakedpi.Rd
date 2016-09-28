@@ -27,7 +27,7 @@ process. \code{NULL} otherwise.}
 
 \item{verbose}{Should the function be verbose?}
 
-\item{cms}{An object of class \code{CMS}.}
+\item{cms}{An object of class \code{CMSproc}.}
 
 \item{cutoff}{A number indicating the new cutoff to use to threshold 
 the density estimate.}

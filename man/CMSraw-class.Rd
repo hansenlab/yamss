@@ -52,8 +52,8 @@ this class are created by the \code{readMSdata} function.
 if (require(mtbls2)) {
 data(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")
-files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)[1:2]
-colData <- DataFrame(group = rep(c("wild-type", "mutant"), each = 4))[1:2,,drop=FALSE]
+files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)[1]
+colData <- DataFrame(group = "wild-type")
 cmsRaw <- readMSdata(files = files, colData = colData, verbose = TRUE)
 colData(cmsRaw)
 }
