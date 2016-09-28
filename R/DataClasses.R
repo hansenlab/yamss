@@ -61,6 +61,10 @@ setMethod("show", signature(object = "CMSproc"),
     object@mzParams[["mzMax"]]
 }
 
+.maxScan <- function(object) {
+    object@mzParams[["maxScan"]]
+}
+
 .sampleNumber <- function(object) {
     object@colData[, "sample"]
 }
