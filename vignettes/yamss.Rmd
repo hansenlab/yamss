@@ -67,7 +67,14 @@ The `dbandwidth` and `dgridstep` arguments influence the bivariate kernel densit
 
 For experiments with a wide range of M/Z values or several thousands of scans, the computation of the density estimate can be time-intensive. For this reason, it can be useful to save the density estimate in an external file specified by the `outfileDens` argument. If `outfileDens` is set to `NULL`, then the density estimate is not saved and must be recomputed if we wish to process the data again. Specifying the filename of the saved density estimate in `outfileDens` when rerunning `bakedpi()` skips the density estimation phase which can save a lot of time.
 
-The resulting object is an instance of class `CMSproc` and contains several pieces of information used in preprocessing as well as differential analysis results.
+The resulting object is an instance of class `CMSproc` which contains the bivariate kernel density estimate as well as some useful preprocessing metadata. In order to obtain peak bounds and quantifications, the last step is to run `slicepi()`, which computes a global threshold for the density, uses this threshold to call peak bounds, and quantifies the peaks. If the `cutoff` argument is supplied as a number, then `slicepi()` will use this as the density threshold. Otherwise if `cutoff` is left as the default `NULL`, a data-driven threshold will be identified.
+
+```{r}
+cmsSlice <- slicepi(cmsProc = cmsProc, cutoff = NULL, verbose = TRUE)
+cmsSlice
+```
+
+The output of `slicepi()` is an instance of class `CMSslice` and contains the peak bounds and quantifications as well as sample and preprocessing metadata.
 
 # Differential Analysis
 
