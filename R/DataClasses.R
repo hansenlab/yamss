@@ -53,12 +53,12 @@ setMethod("show", signature(object = "CMSproc"),
 })
 
 ## Convenience functions
-.mzMin <- function(object) {
-    object@mzParams[["mzMin"]]
+.minMZ <- function(object) {
+    object@mzParams[["minMZ"]]
 }
 
-.mzMax <- function(object) {
-    object@mzParams[["mzMax"]]
+.maxMZ <- function(object) {
+    object@mzParams[["maxMZ"]]
 }
 
 .maxScan <- function(object) {

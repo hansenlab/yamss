@@ -1,30 +1,7 @@
-getPeakInfo <- function(files) {
-    isCDF <- length(grep("\\.cdf", files[1], ignore.case = TRUE))==1
-    backend <- ifelse(isCDF, "netCDF", "Ramp")
-    peakInfoAllfiles <- lapply(seq_along(files), function(i) {
-        msobj <- openMSfile(files[i], backend = backend)
-        peakInfo <- peaks(msobj)
-        ## Only keep scans where the MZ level is 1 (MS versus MS-MS)
-        headerInfo <- header(msobj)
-        whMS1 <- which(headerInfo$msLevel==1)
-        peakInfo <- peakInfo[whMS1]
-                                        # Remove rows with zero intensity
-        peakInfo <- lapply(peakInfo, function(spectrum) {
-            keep <- spectrum[,2] > 1e-6
-            return(spectrum[keep,,drop = FALSE])
-        })
-        close(msobj)
-                                        # Store retention time information
-        attr(peakInfo, "rt") <- headerInfo$retentionTime[whMS1]
-        return(peakInfo)
-    })
-    return(peakInfoAllfiles)
-}
-
 getTIC <- function(object, sample) {
     stopifnot(is(object, "CMSraw"))
     rawDT <- .rawDT(object)
-    setkey(DT, scan)
+    setkey(rawDT, scan)
     ticDT <- rawDT[sample==sample, tic = log2(sum(intensity)+1), by = scan]
     tic <- rep(0, .maxScan(object))
     tic[ticDT[,scan]] <- ticDT[,tic]
@@ -35,8 +12,8 @@ getEICS <- function(object, mzranges) {
     stopifnot(is(object, "CMSraw") | is(object, "CMSproc"))
     ## Convert mzranges to an IRanges if a matrix
     if (class(mzranges) != "IRanges") {
-        mzranges <- IRanges(start = as.integer(mzranges[,1]*1e5), 
-            end = as.integer(mzranges[,2]*1e5))
+        mzranges <- IRanges(start = as.integer(mzranges[,1]*1e5),
+                            end = as.integer(mzranges[,2]*1e5))
     }
     ## Sort DT and get XICs
     rawDT <- object@rawDT
@@ -86,11 +63,14 @@ plotDensityRegion <- function(cms, mzrange, scanrange) {
     idxScan <- which.min(abs(scanrange[1]-scans)):which.min(abs(scanrange[2]-scans))
     subdensmat <- cms@density[idxMZ, idxScan]
 
-    mypalette <- colorRampPalette(c("white", "palegoldenrod", "palegreen", "#99ccff", "#ff9999", "red"))
+    mypalette <- colorRampPalette(c("white", "palegoldenrod",
+                                    "palegreen", "#99ccff", "#ff9999", "red"))
     colorsdens <- c(rep("white", 890), mypalette(110))
-    image(z = t(subdensmat), x = scanrange[1]:scanrange[2], y = mzs[idxMZ], col = colorsdens,
-          breaks = cms@densityQuantiles, xlab = "Scan", ylab = "M/Z",
-          main = paste0("M/Z: ", mzrange[1], " - ", mzrange[2], ". Scans: ", scanrange[1], " - ", scanrange[2]))
+    main <- sprintf("M/Z: %f - %f. Scan: %i - %i", mzrange[1], mzrange[2],
+                    scanrange[1], scanrange[2])
+    image(z = t(subdensmat), x = scanrange[1]:scanrange[2], y = mzs[idxMZ],
+          col = colorsdens, breaks = cms@densityQuantiles,
+          xlab = "Scan", ylab = "M/Z", main = main)
 }
 
 updatePeaks <- function(cms, cutoff) {
@@ -98,11 +78,11 @@ updatePeaks <- function(cms, cutoff) {
     if (nrow(cms@density)==0) {
         stop("cms cmsect must have a density estimate")
     }
-    cms@peakBounds <- computePeakBounds(cms@density, dcutoff = cutoff, verbose = FALSE)
+    cms@peakBounds <- computePeakBounds(cms@density, dcutoff = cutoff)
     if (cms@rtAlign) {
-        cms <- getXICsAndQuantifyWithRetentionTime(object = cms, verbose = FALSE)
+        cms <- getXICsAndQuantifyWithRetentionTime(object = cms)
     } else {
-        cms <- getXICsAndQuantifyWithoutRetentionTime(object = cms, verbose = FALSE)
+        cms <- getXICsAndQuantifyWithoutRetentionTime(object = cms)
     }
     return(cms)
 }

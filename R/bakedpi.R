@@ -32,53 +32,13 @@
     object
 }
 
-
-readMSdata <- function(files, colData = NULL, mzsubset = NULL, verbose = FALSE) {
-    if(verbose) {
-        message(sprintf("[readRaw]: Reading %i files", length(files)))
-    }
-    ## Check that file exists
-    stopifnot(all(file.exists(files)))
-    ## If colData is supplied, check nrow(colData)==length(files)
-    if (!is.null(colData)) {
-        stopifnot(nrow(colData)==length(files))
-    }
-    cmsRaw <- new("CMSraw")
-    rawPeakInfo <- getPeakInfo(files)
-    ## Make raw data matrix and data.table
-    rawdatamat <- do.call(rbind, lapply(seq_along(rawPeakInfo), function(s) {
-                                     cbind(do.call(rbind, lapply(seq_along(rawPeakInfo[[s]]), function(scan) {
-                                                              cbind(rawPeakInfo[[s]][[scan]], scan)
-                                                          })), s)
-                                 }))
-    colnames(rawdatamat) <- c("mz", "intensity", "scan", "sample")
-    rawDT <- data.table(mz = as.integer(rawdatamat[,"mz"]*1e5),
-                     intensity = rawdatamat[,"intensity"],
-                     scan = rawdatamat[,"scan"],
-                     sample = rawdatamat[,"sample"])
-    ## Get minimum and maximum M/Zs and scan numbers
-    cmsRaw@mzParams <- .setMZParams(rawDT)
-    cmsRaw@rawDT <- rawDT
-    ## Make coltype data frame
-    ## FIXME: check that colData, if not null, does not have columns names "files" and "sample"
-    fileData <- DataFrame(sample = seq_along(files), files = files)
-    if(is.null(colData)) {
-        cmsRaw@colData <- fileData
-    } else {
-        cmsRaw@colData <- cbind(fileData, colData)
-    }
-    cmsRaw <- .subsetByMZ(cmsRaw, mzsubset = mzsubset)
-    return(cmsRaw)
-}
-
 backgroundCorrection <- function(object, verbose = FALSE) {
     stopifnot(is(object, "CMSraw"))
-    mzParams <- object@mzParams
     rawDT <- .rawDT(object)
     setkey(rawDT, mz, scan, sample)
-    mzbreaks <- c(seq(mzParams$minMZ, mzParams$maxMZ, 10), mzParams$maxMZ)
-    scanbreaks <- seq(1, mzParams$maxScan, 40)
-    scanbreaks[length(scanbreaks)] <- mzParams$maxScan
+    mzbreaks <- c(seq(.minMZ(object), .maxMZ(object), by = 10), .maxMZ(object))
+    scanbreaks <- seq(1, .maxScan(object), 40)
+    scanbreaks[length(scanbreaks)] <- .maxScan(object)
     if(verbose) {
         message("[backgroundCorrection] Get marginal intensities")
     }
@@ -134,11 +94,15 @@ backgroundCorrection <- function(object, verbose = FALSE) {
         bgmeanmatSmoothed <- do.call(cbind, lapply(1:ncol(bgmeanmatThisSample), function(i) {
                                                 dists <- (1:ncol(bgmeanmatThisSample))-i
                                                 wts <- dnorm(dists/4)
-                                                weightmat <- matrix(wts, nrow = nrow(bgmeanmatThisSample), ncol = ncol(bgmeanmatThisSample), byrow = TRUE)
-                                                df <- data.frame(intens = as.numeric(bgmeanmatThisSample), scan = rep(head(scanbreaks, -1), times = ncol(bgmeanmatThisSample)), weight = as.numeric(weightmat))
+                                                weightmat <- matrix(wts, nrow = nrow(bgmeanmatThisSample),
+                                                                    ncol = ncol(bgmeanmatThisSample), byrow = TRUE)
+                                                df <- data.frame(intens = as.numeric(bgmeanmatThisSample),
+                                                                 scan = rep(head(scanbreaks, -1),
+                                                                            times = ncol(bgmeanmatThisSample)),
+                                                                 weight = as.numeric(weightmat))
                                                 df <- df[complete.cases(df),]
                                                 lofit <- loess(intens ~ scan, data = df, weights = weight, span = 0.1)
-                                                predict(lofit, 1:mzParams$maxScan)
+                                                predict(lofit, 1:.maxScan(object))
                                             }))
         mzbounds <- cbind(head(mzbreaks, -1), tail(mzbreaks, -1))
         mzbounds <- mzbounds[keepcols,]
@@ -182,7 +146,6 @@ backgroundCorrection <- function(object, verbose = FALSE) {
 
 rtAlignment <- function(object, verbose = FALSE) {
     stopifnot(is(object, "CMSproc"))
-    mzParams <- object@mzParams
     rawDT <- .rawDT(object)
     bgcorrDT <- object@bgcorrDT
     if(verbose) {
@@ -211,7 +174,7 @@ rtAlignment <- function(object, verbose = FALSE) {
     }
     ptime1 <- proc.time()
     eics <- getEICS(object, mzranges = irmzr)
-    scans <- 1:object@mzParams$maxScan
+    scans <- 1:.maxScan(object)
     eicsImputed <- lapply(eics, function(x) {
         do.call(cbind, lapply(1:ncol(x), function(col) {
                            bool <- x[,col] > 1e-6
@@ -280,8 +243,8 @@ rtAlignment <- function(object, verbose = FALSE) {
     bgcorrDT[, scan := scan + shift]
     rawDT[, shift := NULL]
     bgcorrDT[, shift := NULL]
-    rawDT <- rawDT[scan >= 1 & scan <= object@mzParams$maxScan]
-    bgcorrDT <- bgcorrDT[scan >= 1 & scan <= object@mzParams$maxScan]
+    rawDT <- rawDT[scan >= 1 & scan <= .maxScan(object)]
+    bgcorrDT <- bgcorrDT[scan >= 1 & scan <= .maxScan(object)]
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) {
@@ -423,8 +386,8 @@ densityEstimation <- function(object, dgridstep = dgridstep, dbandwidth = dbandw
         message(sprintf("[densityEstimation] Make density matrix .. done in %.1f secs.", stime))
     }
     rm(densList)
-    rownames(dmat) <- seq(object@mzParams$minMZ, object@mzParams$maxMZ, length.out = nrow(dmat))
-    colnames(dmat) <- seq(1, object@mzParams$maxScan, dgridstep[2])
+    rownames(dmat) <- seq(.minMZ(object), .maxMZ(object), length.out = nrow(dmat))
+    colnames(dmat) <- seq(1, .maxScan(object), dgridstep[2])
     return(list(dmat = dmat))
 }
 
@@ -434,10 +397,9 @@ getCutoff <- function(object, by = 2, verbose = FALSE) {
     }
     stopifnot(is(object, "CMSproc"))
     ptime1 <- proc.time()
-    mzParams <- object@mzParams
     bgcorrDT <- object@bgcorrDT
     densmat <- object@density
-    mzregions <- seq(mzParams$minMZ, mzParams$maxMZ, by)
+    mzregions <- seq(.minMZ(object), .maxMZ(object), by = by)
     setkey(bgcorrDT, mz)
     densmatMzs <- as.numeric(rownames(densmat))
     densmatScans <- as.numeric(colnames(densmat))
@@ -472,9 +434,9 @@ getCutoff <- function(object, by = 2, verbose = FALSE) {
         mzseq <- seq(as.integer(mzwindow[1]*1e5), as.integer(mzwindow[2]*1e5))
         subdt <- bgcorrDT[.(mzseq), nomatch = 0]
         subdt <- subdt[, .N, by = scan]
-        numperscan <- rep(0, mzParams$maxScan)
+        numperscan <- rep(0, .maxScan(object))
         numperscan[subdt[,scan]] <- subdt[,N]
-        names(numperscan) <- 1:mzParams$maxScan
+        names(numperscan) <- 1:.maxScan(object)
         numperscan <- numperscan[as.character(densmatScans)]
         scanIndex <- which.min(abs(densmatScans-scan))
         left <- ifelse(sum(numperscan[scanIndex:1]==0)==0, 1, scanIndex-which.max(numperscan[scanIndex:1]==0)+1)
@@ -538,7 +500,6 @@ getXICsAndQuantifyWithRetentionTime <- function(object, verbose = FALSE) {
         message("[getXICsAndQuantifyWithRetentionTime] compute XICs")
     }
     stopifnot(is(object, "CMSproc"))
-    mzParams <- object@mzParams
     rawDT <- .rawDT(object)
     setkey(rawDT, mz, scan)
     ptime1 <- proc.time()
@@ -565,7 +526,7 @@ getXICsAndQuantifyWithRetentionTime <- function(object, verbose = FALSE) {
         message("[getXICsAndQuantifyWithRetentionTime] quantify")
     }
     scanstep <- 0.01
-    scanseq <- seq(0, mzParams$maxScan, scanstep)
+    scanseq <- seq(0, .maxScan(object), scanstep)
     ptime1 <- proc.time()
     quantmat <- do.call(rbind, lapply(seq_along(eicsRaw), function(i) {
                                    wh <- which.min(abs(scanseq-object@peakBounds[i,"scan.min"])):which.min(abs(scanseq-object@peakBounds[i,"scan.max"]))
@@ -588,7 +549,6 @@ getXICsAndQuantifyWithoutRetentionTime <- function(object, verbose = FALSE) {
         message("[getXICsAndQuantifyWithoutRetentionTime] compute XICs")
     }
     stopifnot(is(object, "CMSproc"))
-    mzParams <- object@mzParams
     ptime1 <- proc.time()
     irmzr <- IRanges(start = as.integer(object@peakBounds[,"mzmin"]*1e5), 
                      end = as.integer(object@peakBounds[,"mzmax"]*1e5))
@@ -598,7 +558,7 @@ getXICsAndQuantifyWithoutRetentionTime <- function(object, verbose = FALSE) {
     if(verbose) {
         message(sprintf(".. done in %.1f secs.", stime))
     }
-    scans <- 1:mzParams$maxScan
+    scans <- 1:.maxScan(object)
 
     if(verbose) {
         message("[getXICsAndQuantifyWithoutRetentionTime] Impute")
@@ -622,7 +582,8 @@ getXICsAndQuantifyWithoutRetentionTime <- function(object, verbose = FALSE) {
         message("[getXICsAndQuantifyWithoutRetentionTime] quantify")
     }
     quantmat <- do.call(rbind, lapply(seq_along(eicsImputed), function(i) {
-                                   mat <- eicsImputed[[i]][object@peakBounds[i, "scan.min"]:min(c(object@peakBounds[i, "scan.max"], mzParams$maxScan)),,drop = FALSE]
+                                   mat <- eicsImputed[[i]][object@peakBounds[i, "scan.min"]:min(c(object@peakBounds[i, "scan.max"],
+                                                                                                  .maxScan(object))),,drop = FALSE]
                                    mat <- (2^mat)-1
                                    colSums(mat)
                                }))
