@@ -21,10 +21,14 @@ getPeakInfo <- function(files) {
     return(peakInfoAllfiles)
 }
 
-getTIC <- function(object) {
+getTIC <- function(object, sample) {
     stopifnot(is(object, "CMSraw"))
-    ## FIXME 
-    ## log2(sapply(peak.info, function(spec) { sum(spec[,2]) }) + 1)
+    rawDT <- .rawDT(object)
+    setkey(DT, scan)
+    ticDT <- rawDT[sample==sample, tic = log2(sum(intensity)+1), by = scan]
+    tic <- rep(0, .maxScan(object))
+    tic[ticDT[,scan]] <- ticDT[,tic]
+    return(tic)
 }
 
 getEICS <- function(object, mzranges) {
