@@ -24,7 +24,7 @@ setClass("CMSproc",
              rtAlign = FALSE,
              bgcorrDT = data.table(),
              density = matrix(),
-             densityQuantiles = numeric(),
+             densityQuantiles = numeric()
          )
          )
 
