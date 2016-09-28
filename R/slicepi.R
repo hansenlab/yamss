@@ -170,6 +170,7 @@ slicepi <- function(cmsProc, cutoff = NULL, verbose = TRUE) {
     } else {
         metadata[["densityCutoff"]] <- cutoff
     }
+    metadata[["densityQuantiles"]] <- densityQuantiles(cmsProc)
     
     if(verbose) {
         message("[slicepi] Computing peak bounds")
