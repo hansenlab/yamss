@@ -1,11 +1,9 @@
 \name{bakedpi}
 \alias{bakedpi}
-\alias{updatePeaks}
 \title{Process raw data to obtain quantifications.}
 \usage{
 bakedpi(cmsRaw, dbandwidth = c(0.005, 10), dgridstep = c(0.005, 1),
   outfileDens = NULL, dortalign = FALSE, mzsubset = NULL, verbose = TRUE)
-updatePeaks(cms, cutoff)
 }
 \arguments{
 \item{cmsRaw}{An object of class \code{CMSraw}.}
@@ -26,34 +24,25 @@ performed?}
 process. \code{NULL} otherwise.}
 
 \item{verbose}{Should the function be verbose?}
-
-\item{cms}{An object of class \code{CMSproc}.}
-
-\item{cutoff}{A number indicating the new cutoff to use to threshold 
-the density estimate.}
 }
 \value{
-An object of class \code{CMSproc} containing preprocessing information.
+An object of class \code{CMSproc} containing background corrected intensities, 
+the bivariate kernel density estimate, and quantiles of the nonzero values in 
+the density estimate.
 }
 \description{
 The \code{bakedpi} method stands for bivariate approximate kernel density 
 estimation for peak identification. It performs background correction, 
-retention time correction, and peak detection. As part of this analysis, 
-a two-dimenstional density is computed and thresholded (at a data-driven 
-threshold).
-
-The \code{updatePeaks} function allows a user to change the density
-threshold as described in the previous paragraph, to a user-defined
-threshold. After applying the threshold, peaks are detected and
-quantified again.
+retention time correction, and bivariate kernel density estimation.
 }
 \details{
 \code{bakedpi} first performs region-specific background correction. An
 optional retention time correction step follows in which M/Z region-specific
 shifts are computed to align the raw data. Next the two-dimensional density
-estimate is computed. A cutoff is determined to call peaks which are then
-quantified. The primary goal of \code{bakedpi} is to produce quantifications 
-that provide powerful differential analysis.
+estimate is computed. The purpose of this function is to take the raw data 
+read in by \code{readMSdata} and perform the steps necessary for bivariate 
+kernel density estimation. The output of this function is used by 
+\code{slicepi} to detect peaks and provide peak quantifications.
 }
 \examples{
 \dontrun{
