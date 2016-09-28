@@ -78,8 +78,12 @@ setMethod("show", signature(object = "CMSproc"),
 }
 
 
-## Accessors for CMSproc
+## Exported accessors
 setMethod("colData", signature(x = "CMSraw"), function(x) {
+    x@colData
+})
+
+setMethod("colData", signature(x = "CMSslice"), function(x) {
     x@colData
 })
 
