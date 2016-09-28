@@ -33,5 +33,5 @@ colnames(densmat) <- 1:ncol(densmat)
 rownames(densmat) <- seq(350, by = 0.005, length.out = nrow(densmat))
 densityQuantiles <- quantile(densmat, seq(from = 0, to = 1, by = 0.001))
 cmsobj <- new("CMSproc", density = densmat, densityQuantiles = densityQuantiles)
-cmsSlice <- slicepi(cmsobj, cutoff = densityQuantiles["99.0%"])
+cmsSlice <- slicepi(cmsobj, cutoff = densityQuantiles[999])
 }
