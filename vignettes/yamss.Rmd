@@ -1,6 +1,6 @@
 ---
 title: "The yamss User's Guide"
-author: "Leslie Myint"
+author: "Leslie Myint, Kasper Daniel Hansen"
 date: "`r doc_date()`"
 package: "`r pkg_ver('yamss')`"
 bibliography: yamss.bib
@@ -19,11 +19,11 @@ output:
 
 The `r Biocpkg("yamss")` package provides tools to preprocess raw mass spectral data files arising from metabolomics experiments with the primary goal of providing high-quality differential analysis. Currently, `r Biocpkg("yamss")` implements a preprocessing method "bakedpi".  
 
-Alternatives to this package includes  `r Biocpkg("xcms")` [@xcms] (available on Bioconductor) and MZMine 2 [@mzmine].  These packages  also provide preprocessing functionality but focus more on feature detection and alignment in individual samples.  The input data to `r Biocpkg("yamss")` are standard metabolomics mass spectral files which can be read by `r Biocpkg("mzR")`.
+Alternatives to this package include  `r Biocpkg("xcms")` [@xcms] (available on Bioconductor) and MZMine 2 [@mzmine].  These packages  also provide preprocessing functionality but focus more on feature detection and alignment in individual samples.  The input data to `r Biocpkg("yamss")` are standard metabolomics mass spectral files which can be read by `r Biocpkg("mzR")`.
 
 ## bakedpi
 
-The "bakedpi" algorithm is a new preprocessing algorithm for untargetted metabolomics data (manuscript in preparation).  The output of "bakedpi" is essentially a table with dimension peaks (adducts) by samples, containing quantified intensity measurements representing the abundance of metabolites.  This table, which is very similar to output in gene expression analysis, can directly be used in standard statistical packages, such as `r Biocpkg("limma")`, to identify differentially abundant metabolites between conditions.  It is critical that all samples which are analyzed together, are processed together through bakedpi.
+The "bakedpi" algorithm is a new preprocessing algorithm for untargeted metabolomics data (manuscript in preparation).  The output of "bakedpi" is essentially a table with dimension peaks (adducts) by samples, containing quantified intensity measurements representing the abundance of metabolites.  This table, which is very similar to output in gene expression analysis, can directly be used in standard statistical packages, such as `r Biocpkg("limma")`, to identify differentially abundant metabolites between conditions.  It is critical that all samples which are analyzed together, are processed together through bakedpi.
 
 
 ## Dependencies
@@ -55,7 +55,7 @@ cmsRaw
 
 The output of `readMSdata()` is an object of class `CMSraw` representating raw (unprocessed) data.  We use the `colData` argument to store phenotype information about the different samples.
 
-Next step is to use `bakedpi()` to preprocess these samples.  This function takes a while to run, so we only run it on a small slice of MZ values, using the `mzsubset` argument.  This is only done for speed.
+The next step is to use `bakedpi()` to preprocess these samples.  This function takes a while to run, so we only run it on a small slice of M/Z values, using the `mzsubset` argument.  This is only done for speed.
 
 ```{r}
 cmsProc <- bakedpi(cmsRaw = cmsRaw, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
