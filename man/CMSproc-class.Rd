@@ -2,18 +2,13 @@
 \docType{class}
 \alias{CMSproc-class}
 \alias{densityEstimate}
-\alias{densityCutoff}
 \alias{densityQuantiles}
-\alias{peakBounds}
-\alias{peakQuants}
 \alias{show,CMSproc-method}
 \title{A class to hold chromatography-mass spectrometry preprocessing information.}
 \description{
-This class transforms information from raw mass spectral files to a matrix
-of peak quantifications suitable for differential analysis. It first 
-performs background correction and retention time alignment of the raw 
-data. Next it performs weighted bivariate kernel density estimation to 
-detect peaks.
+This class builds on the \code{CMSraw} class to additionally store 
+background-corrected intensities as well as the bivariate kernel density 
+estimate.
 }
 
 \section{Slots}{
@@ -39,20 +34,9 @@ detect peaks.
       a matrix with rows corresponding to M/Z values and columns 
       corresponding to scans containing the kernel density estimate.
     }
-    \item{\code{densityCutoff}:}{
-      the density cutoff value used to determine peak regions.
-    }
     \item{\code{densityQuantiles}:}{
       a numeric vector containing the 100 percent quantiles of the
       nonzero density values.
-    }
-    \item{\code{peakBounds}:}{
-      a matrix of information about the detected peaks : M/Z bounds,
-      scan bounds, and ID number (\dQuote{peaknum}).
-    }
-    \item{\code{peakQuants}:}{
-      a matrix of quantifications where rows correspond to peaks and 
-      columns correspond to samples.
     }
   }
 }
@@ -67,9 +51,9 @@ detect peaks.
     \item{\code{getEICS}:}{
       Gets extracted ion chromatograms (EICs) for the supplied M/Z ranges.
     }
-    \item{\code{updatePeaks}:}{
-      Given a new threshold value for the density estimate, repeats peak 
-      detection and quantification and provides an updated \code{CMSproc} object.
+    \item{\code{plotDensityRegion}:}{
+      Makes an image plot of the density estimate in a specified M/Z and 
+      scan region.
     }
   }
 }
@@ -84,27 +68,16 @@ detect peaks.
     \item{\code{densityEstimate}:}{
       Gets the matrix containing the density estimate.
     }
-    \item{\code{densityCutoff}:}{
-      Gets the value used to threshold the density for peak calling.
-    }
     \item{\code{densityQuantiles}:}{
       Gets the quantiles of the nonzero values in the density estimate.
-    }
-    \item{\code{peakBounds}:}{
-      Gets the M/Z bounds, scan bounds, and ID numbers for detected peaks.
-    }
-    \item{\code{peakQuants}:}{
-      Gets the matrix of peak quantifications (rows: peaks, columns: samples).
     }
   }
 }
 
 \examples{
-quants <- matrix(rnorm(12*5000), nrow = 5000, ncol = 12)
-bounds <- cbind(mzmin = seq(from = 100, to = 1100, length.out = 5000),
-                mzmax = seq(from = 100, to = 1100, length.out = 5000) + 0.1,
-                scan.min = rep(10,5000), scan.max = rep(20, 5000),
-                peaknum = 1:5000)
-cmsobj <- new("CMSproc", peakQuants = quants, peakBounds = bounds)
-head(peakQuants(cmsobj))
+densmat <- matrix(rnorm(600), nrow = 20, ncol = 30)
+colnames(densmat) <- 1:ncol(densmat)
+rownames(densmat) <- seq(350, by = 0.005, length.out = nrow(densmat))
+cmsobj <- new("CMSproc", density = densmat)
+head(densityEstimate(cmsobj))
 }
