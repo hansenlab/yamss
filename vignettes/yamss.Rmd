@@ -127,7 +127,7 @@ cmsSlice2 <- slicepi(cmsProc, densityCutoff(cmsProc)*0.99)
 dqs <- densityQuantiles(cmsProc)
 head(dqs)
 cmsSlice3 <- slicepi(cmsProc, dqs["98.5%"])
-nrow(peakBounds(cmsProc)) # Number of peaks detected - original
+nrow(peakBounds(cmsSlice)) # Number of peaks detected - original
 nrow(peakBounds(cmsSlice2)) # Number of peaks detected - updated
 nrow(peakBounds(cmsSlice3)) # Number of peaks detected - updated
 ```
