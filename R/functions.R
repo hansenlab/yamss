@@ -72,17 +72,3 @@ plotDensityRegion <- function(cms, mzrange, scanrange) {
           col = colorsdens, breaks = cms@densityQuantiles,
           xlab = "Scan", ylab = "M/Z", main = main)
 }
-
-updatePeaks <- function(cms, cutoff) {
-    stopifnot(is(cms, "CMSproc"))
-    if (nrow(cms@density)==0) {
-        stop("cms cmsect must have a density estimate")
-    }
-    cms@peakBounds <- computePeakBounds(cms@density, dcutoff = cutoff)
-    if (cms@rtAlign) {
-        cms <- getXICsAndQuantifyWithRetentionTime(object = cms)
-    } else {
-        cms <- getXICsAndQuantifyWithoutRetentionTime(object = cms)
-    }
-    return(cms)
-}
