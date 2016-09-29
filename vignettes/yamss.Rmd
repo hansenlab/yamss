@@ -123,7 +123,7 @@ plotDensityRegion(cmsProc, mzrange = mzrange + c(-0.5,0.5), scanrange = scanrang
 Peaks are called by thresholding the density estimate. If we wish to investigate the impact of varying this cutoff, we can use `densityCutoff` to obtain the original cutoff and `updatePeaks()` to re-call peaks and quantify them. Quantiles of the non-zero density values are also available via `densityQuantiles()`.
 
 ```{r}
-cmsSlice2 <- slicepi(cmsProc, densityCutoff(cmsProc)*0.99)
+cmsSlice2 <- slicepi(cmsProc, densityCutoff(cmsSlice)*0.99)
 dqs <- densityQuantiles(cmsProc)
 head(dqs)
 cmsSlice3 <- slicepi(cmsProc, dqs["98.5%"])
