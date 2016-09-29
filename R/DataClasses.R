@@ -66,7 +66,7 @@ setMethod("show", signature(object = "CMSslice"),
     cat(sprintf("Representing %i data files\n", nrow(object@colData)))
     cat(sprintf("Number of scans: %i\n", object@mzParams$maxScan))
     cat(sprintf("M/Z: %f - %f\n", object@mzParams$minMZraw, object@mzParams$maxMZraw))
-    cat(sprintf("Number of peaks: %i\n", nrow(peakBounds(object))))
+    cat(sprintf("Number of peaks: %i\n", nrow(object)))
 })
 
 
