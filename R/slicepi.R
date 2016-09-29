@@ -165,7 +165,7 @@ slicepi <- function(object, cutoff = NULL, verbose = TRUE) {
         cutoff <- getCutoff(object = object, by = 2, verbose = subverbose)
         ## Get density quantiles and choose the higher of the two
         qcutoff <- which.min(abs(cutoff-densityQuantiles(object)))
-        ## FIXME: qs is undefined
+        qs <- seq(0.001,0.999,0.001)
         qref <- which.min(abs(qs-0.99))
         metadata[["densityCutoff"]] <- max(cutoff, densityQuantiles(object)[qref])
     } else {
