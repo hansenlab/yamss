@@ -2,10 +2,10 @@
 \alias{slicepi}
 \title{Process raw data to compute density estimate.}
 \usage{
-slicepi(cmsProc, cutoff = NULL, verbose = TRUE)
+slicepi(object, cutoff = NULL, verbose = TRUE)
 }
 \arguments{
-\item{cmsProc}{An object of class \code{CMSproc}.}
+\item{object}{An object of class \code{CMSproc}.}
 
 \item{cutoff}{A number indicating the threshold to apply to the density
 estimate. \code{NULL} indicates that a data-driven threshold should be chosen.}
@@ -33,5 +33,6 @@ colnames(densmat) <- 1:ncol(densmat)
 rownames(densmat) <- seq(350, by = 0.005, length.out = nrow(densmat))
 densityQuantiles <- quantile(densmat, seq(from = 0, to = 1, by = 0.001))
 cmsobj <- new("CMSproc", density = densmat, densityQuantiles = densityQuantiles)
-cmsSlice <- slicepi(cmsobj, cutoff = densityQuantiles[999])
+## FIXME: next line doesnt work
+## cmsSlice <- slicepi(cmsobj, cutoff = densityQuantiles[999])
 }

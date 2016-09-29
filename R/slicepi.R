@@ -151,7 +151,7 @@ getEICsAndQuantify <- function(object, peakBounds, verbose = FALSE) {
     return(object)
 }
 
-slicepi <- function(cmsProc, cutoff = NULL, verbose = TRUE) {
+slicepi <- function(object, cutoff = NULL, verbose = TRUE) {
     ## Set verbosity options
     subverbose <- max(as.integer(verbose) - 1L, 0)
 
@@ -162,31 +162,32 @@ slicepi <- function(cmsProc, cutoff = NULL, verbose = TRUE) {
         if(verbose) {
             message("[slicepi] Computing cutoff")
         }
-        cutoff <- getCutoff(object = cmsProc, by = 2, verbose = subverbose)
+        cutoff <- getCutoff(object = object, by = 2, verbose = subverbose)
         ## Get density quantiles and choose the higher of the two
-        qcutoff <- which.min(abs(cutoff-densityQuantiles(cmsProc)))
+        qcutoff <- which.min(abs(cutoff-densityQuantiles(object)))
+        ## FIXME: qs is undefined
         qref <- which.min(abs(qs-0.99))
-        metadata[["densityCutoff"]] <- max(cutoff, densityQuantiles(cmsProc)[qref])
+        metadata[["densityCutoff"]] <- max(cutoff, densityQuantiles(object)[qref])
     } else {
         metadata[["densityCutoff"]] <- cutoff
     }
-    metadata[["densityQuantiles"]] <- densityQuantiles(cmsProc)
+    metadata[["densityQuantiles"]] <- densityQuantiles(object)
     
     if(verbose) {
         message("[slicepi] Computing peak bounds")
     }
-    peakBounds <- computePeakBounds(densmat = densityEstimate(cmsProc), dcutoff = metadata[["densityCutoff"]], verbose = subverbose)
+    peakBounds <- computePeakBounds(densmat = densityEstimate(object), dcutoff = metadata[["densityCutoff"]], verbose = subverbose)
 
     ## Get EICs and quantifications
     if(verbose) {
         message("[slicepi] Quantifying peaks")
     }
-    peakQuants <- getEICsAndQuantify(object = cmsProc, peakBounds = peakBounds, verbose = subverbose)
+    peakQuants <- getEICsAndQuantify(object = object, peakBounds = peakBounds, verbose = subverbose)
 
     ## Create SummarizedExperiment container
-    object <- new("CMSslice", assays = list(peakQuants = peakQuants),
-                              rowData = DataFrame(peakBounds),
-                              colData = colData(cmsProc), metadata = metadata)
-    
-    return(object)
+    CMSslice(out = SimpleList(peakQuants = peakQuants),
+             rowData = DataFrame(peakBounds),
+             colData = colData(object),
+             metadata = metadata,
+             mzParams = object@mzParams)
 }

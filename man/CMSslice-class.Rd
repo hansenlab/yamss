@@ -1,37 +1,19 @@
 \name{CMSslice-class}
 \docType{class}
 \alias{CMSslice-class}
+\alias{CMSslice}
 \alias{densityCutoff}
-\alias{densityQuantiles}
 \alias{peakBounds}
 \alias{peakQuants}
 \alias{show,CMSslice-method}
-\title{A class to hold chromatography-mass spectrometry peak bounds and quantifications.}
-\description{
-This class is a wrapper for the \code{SummarizedExperiment} class. It holds 
-information on peak quantifications, M/Z and scan bounds, sample information, 
-and preprocessing metadata.
-}
+\title{A class to hold chromatography-mass spectrometry peak bounds and
+  quantifications.}
 
-\section{Slots}{
-  \describe{
-    \item{\code{assays}:}{
-      a list with a single element "peakQuants" that holds the feature by 
-      samples matrix of peak quantifications.
-    }
-    \item{\code{rowData}:}{
-      a \code{DataFrame} with rows corresponding to peaks containing peak 
-      M/Z and scan (retention time) bound information.
-    }
-    \item{\code{colData}:}{
-      a \code{DataFrame} of phenotype and sample information.
-    }
-    \item{\code{metadata}:}{
-      a list with elements "densityCutoff" and "densityQuantiles" which hold 
-      the threshold used to slice the density for peak calling and the 
-      quaniles of the nonzero density values.
-    }
-  }
+\description{
+This class is based on the \code{SummarizedExperiment} class. It holds 
+information on peak quantifications, M/Z and scan bounds, sample information, 
+and preprocessing metadata. Objects of the class can be constructed
+using \code{CMSslice}.
 }
 
 \section{Utility functions}{
@@ -73,7 +55,7 @@ bounds <- cbind(mzmin = seq(from = 100, to = 1100, length.out = 5000),
                 mzmax = seq(from = 100, to = 1100, length.out = 5000) + 0.1,
                 scan.min = rep(10,5000), scan.max = rep(20, 5000),
                 peaknum = 1:5000)
-cmsobj <- new("CMSslice", assays = list(peakQuants = quants), 
-                         rowData = DataFrame(bounds))
+cmsobj <- CMSslice(assays = SimpleList(peakQuants = quants),
+                   rowData = DataFrame(bounds))
 head(peakQuants(cmsobj))
 }

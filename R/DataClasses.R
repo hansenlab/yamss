@@ -30,30 +30,36 @@ setClass("CMSproc",
 
 setClass("CMSslice",
          contains = "SummarizedExperiment",
-         prototype = prototype(
-             assays = list(),
-             rowData = DataFrame(),
-             colData = DataFrame(),
-             metadata = list()
-         )
+         representation(mzParams = "list")
          )
 
+CMSslice <- function(..., mzParams = list()) {
+    se <- SummarizedExperiment(...)
+    cms <- as(se, "CMSslice")
+    cms@mzParams <- mzParams
+    cms
+}
+
+.printMZparams <- function(mzParams) {
+    cat(sprintf("Number of scans: %i\n", mzParams$maxScan))
+    cat(sprintf("M/Z: %f - %f\n", mzParams$minMZraw, mzParams$maxMZraw))
+}
+    
 setMethod("show", signature(object = "CMSraw"),
           function(object) {
-    cat("An object of class 'CMSraw'\n")
+    cat(sprintf("class: %s\n", class(object)))
     cat(sprintf("Representing %i data files\n", nrow(object@colData)))
-    cat(sprintf("Number of scans: %i\n", object@mzParams$maxScan))
-    cat(sprintf("M/Z: %f - %f\n", object@mzParams$minMZraw, object@mzParams$maxMZraw))
+    .printMZparams(object@mzParams)
 })
 
 setMethod("show", signature(object = "CMSproc"),
           function(object) {
-    cat("An object of class 'CMSproc'\n")
+    cat(sprintf("class: %s\n", class(object)))
     cat(sprintf("Representing %i data files\n", nrow(object@colData)))
-    cat(sprintf("Number of scans: %i\n", object@mzParams$maxScan))
-    cat(sprintf("M/Z: %f - %f\n", object@mzParams$minMZraw, object@mzParams$maxMZraw))
-    cat(sprintf("Number of peaks: %i\n", nrow(object@peakBounds)))
+    .printMZparams(object@mzParams)
 })
+
+
 
 ## Convenience functions
 .minMZ <- function(object) {
@@ -80,10 +86,6 @@ setMethod("show", signature(object = "CMSproc"),
 
 ## Exported accessors
 setMethod("colData", signature(x = "CMSraw"), function(x) {
-    x@colData
-})
-
-setMethod("colData", signature(x = "CMSslice"), function(x) {
     x@colData
 })
 

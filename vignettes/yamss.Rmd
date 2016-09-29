@@ -58,7 +58,7 @@ The output of `readMSdata()` is an object of class `CMSraw` representating raw (
 The next step is to use `bakedpi()` to preprocess these samples.  This function takes a while to run, so we only run it on a small slice of M/Z values, using the `mzsubset` argument.  This is only done for speed.
 
 ```{r}
-cmsProc <- bakedpi(cmsRaw = cmsRaw, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
+cmsProc <- bakedpi(cmsRaw, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
                    outfileDens = NULL, dortalign = TRUE, mzsubset = c(500, 520), verbose = TRUE)
 cmsProc
 ```
@@ -70,7 +70,7 @@ For experiments with a wide range of M/Z values or several thousands of scans, t
 The resulting object is an instance of class `CMSproc` which contains the bivariate kernel density estimate as well as some useful preprocessing metadata. In order to obtain peak bounds and quantifications, the last step is to run `slicepi()`, which computes a global threshold for the density, uses this threshold to call peak bounds, and quantifies the peaks. If the `cutoff` argument is supplied as a number, then `slicepi()` will use this as the density threshold. Otherwise if `cutoff` is left as the default `NULL`, a data-driven threshold will be identified.
 
 ```{r}
-cmsSlice <- slicepi(cmsProc = cmsProc, cutoff = NULL, verbose = TRUE)
+cmsSlice <- slicepi(cmsProc, cutoff = NULL, verbose = TRUE)
 cmsSlice
 ```
 
