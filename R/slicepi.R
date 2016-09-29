@@ -184,7 +184,7 @@ slicepi <- function(object, cutoff = NULL, verbose = TRUE) {
     peakQuants <- getEICsAndQuantify(object = object, peakBounds = peakBounds, verbose = subverbose)
 
     ## Create SummarizedExperiment container
-    CMSslice(out = SimpleList(peakQuants = peakQuants),
+    CMSslice(assays = SimpleList(peakQuants = peakQuants),
              rowData = DataFrame(peakBounds),
              colData = colData(object),
              metadata = metadata,
