@@ -147,8 +147,7 @@ getEICsAndQuantify <- function(object, peakBounds, verbose = FALSE) {
     if(verbose) {
         message(sprintf("[getEICsAndQuantify]  .. done in %.1f secs.", stime))
     }
-    object@peakQuants <- quantmat
-    return(object)
+    return(quantmat)
 }
 
 slicepi <- function(object, cutoff = NULL, verbose = TRUE) {
