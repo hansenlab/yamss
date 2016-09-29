@@ -62,7 +62,7 @@ setMethod("show", signature(object = "CMSproc"),
 setMethod("show", signature(object = "CMSslice"),
           function(object) {
     ## FIXME add callNextMethod
-    cat("An object of class 'CMSproc'\n")
+    cat("An object of class 'CMSslice'\n")
     cat(sprintf("Representing %i data files\n", nrow(object@colData)))
     cat(sprintf("Number of scans: %i\n", object@mzParams$maxScan))
     cat(sprintf("M/Z: %f - %f\n", object@mzParams$minMZraw, object@mzParams$maxMZraw))
