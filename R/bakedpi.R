@@ -329,7 +329,7 @@ densityEstimation <- function(object, dgridstep = dgridstep, dbandwidth = dbandw
         setkey(dtgscan, gscan)
         denom <- nrow(bgcorrDT)*prod(bw)*sum(bgcorrDT[,intensity])
         getDensityEstimateSparseList <- function(gridseqScan, dtgscan, gscan, bgcorrDT, spmatmz) {
-            by <- 3
+            by <- 10
             scanChunks <- seq(1, length(gridseqScan), by)
             densChunkList <- vector("list", length(scanChunks))
             for (a in seq_along(scanChunks)) {
