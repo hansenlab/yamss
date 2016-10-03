@@ -329,17 +329,35 @@ densityEstimation <- function(object, dgridstep = dgridstep, dbandwidth = dbandw
         setkey(dtgscan, gscan)
         denom <- nrow(bgcorrDT)*prod(bw)*sum(bgcorrDT[,intensity])
         getDensityEstimateSparseList <- function(gridseqScan, dtgscan, gscan, bgcorrDT, spmatmz) {
-            lapply(seq_along(gridseqScan), function(i) {
-                whg <- max(i - ng[2], 1):min(i + ng[2], length(gridseqScan))
-                at <- dtgscan[.(whg), row, nomatch = 0]
-                ## Do intensity weighting here
-                d <- dnorm((gridseqScan[i]-gscan[at])/bw[2])*bgcorrDT[at,intensity]
+            by <- 3
+            scanChunks <- seq(1, length(gridseqScan), by)
+            densChunkList <- vector("list", length(scanChunks))
+            for (a in seq_along(scanChunks)) {
+                ch <- scanChunks[a]
+                chunkSeq <- ch:min(ch+by-1, .maxScan(object))
+                spdensscan <- lapply(seq_along(chunkSeq), function(i) {
+                    whg <- max(i - ng[2], 1):min(i + ng[2], length(gridseqScan))
+                    at <- dtgscan[.(whg), row, nomatch = 0]
+                    ## Do intensity weighting here
+                    d <- dnorm((gridseqScan[i]-gscan[at])/bw[2])*bgcorrDT[at,intensity]
+                    cbind(at, d)
+                })
                 ## rep(1) instead of rep(i) because we're forming one column matrices
                 ## otherwise dims won't be correct
-                spmatscan <- sparseMatrix(i = at, j = rep(1, length(at)), x = d, dims = c(nrow(spmatmz), 1))
+                spmatscan <- sparseMatrix(
+                        i = do.call(c, lapply(seq_along(spdensscan), function(i) {
+                                           spdensscan[[i]][,1]
+                                       })),
+                        j = rep(seq_along(spdensscan), times = sapply(spdensscan, nrow)),
+                        x = do.call(c, lapply(seq_along(spdensscan), function(i) {
+                                           spdensscan[[i]][,2]
+                                       })),
+                        dims = c(nrow(bgcorrDT), length(spdensscan))
+                    )
                 dens <- crossprod(spmatmz, spmatscan)/denom
-                return(dens)
-            })
+                densChunkList[[a]] <- dens
+            }
+            return(densChunkList)
         }
         ptime1 <- proc.time()
         dens <- getDensityEstimateSparseList(gridseqScan, dtgscan, gscan, bgcorrDT, spmatmz)
