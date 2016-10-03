@@ -275,38 +275,44 @@ densityEstimation <- function(object, dgridstep = dgridstep, dbandwidth = dbandw
         if(verbose) {
             message("[getDensityEstimateApprox] Getting sparse matrix entries (M/Z)")
         }
+        getSparseMatrixEntriesMZ <- function(gridseqMz, tabgmz) {
+            lapply(seq_along(gridseqMz), function(i) {
+                whg <- max(i - ng[1], 1):min(i + ng[1], length(gridseqMz))
+                if (i==1) {
+                    start <- 1
+                } else {
+                    start <- sum(tabgmz[1:(whg[1]-1)])+1
+                }
+                end <- (start+sum(tabgmz[whg])-1)
+                if (end < start)
+                    return(matrix(1,0,2))
+                at <- start:end
+                d <- rep(dnorm((gridseqMz[i]-gridseqMz[whg])/bw[1]), times = tabgmz[whg])
+                return(cbind(at,d))
+            })
+        }
         ptime1 <- proc.time()
-        spdensmz <- lapply(seq_along(gridseqMz), function(i) {
-            whg <- max(i - ng[1], 1):min(i + ng[1], length(gridseqMz))
-            if (i==1) {
-                start <- 1
-            } else {
-                start <- sum(tabgmz[1:(whg[1]-1)])+1
-            }
-            end <- (start+sum(tabgmz[whg])-1)
-            if (end < start)
-                return(matrix(1,0,2))
-            at <- start:end
-            d <- rep(dnorm((gridseqMz[i]-gridseqMz[whg])/bw[1]), times = tabgmz[whg])
-            return(cbind(at,d))
-        })
+        spdensmz <- getSparseMatrixEntriesMZ(gridseqMz, tabgmz)
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
         if(verbose) {
             message(sprintf("[getDensityEstimateApprox] Getting sparse matrix entries (M/Z) .. done in %.1f secs.", stime))
             message("[getDensityEstimateApprox] Constructing sparse matrix (M/Z)")
         }
+        getSparseMatrixMZ <- function(spdensmz, bgcorrDT) {
+            sparseMatrix(
+                        i = do.call(c, lapply(seq_along(spdensmz), function(i) {
+                                           spdensmz[[i]][,1]
+                                       })),
+                        j = rep(seq_along(spdensmz), times = sapply(spdensmz, nrow)),
+                        x = do.call(c, lapply(seq_along(spdensmz), function(i) {
+                                           spdensmz[[i]][,2]
+                                       })),
+                        dims = c(nrow(bgcorrDT), length(spdensmz))
+                    )
+        }
         ptime1 <- proc.time()
-        spmatmz <- sparseMatrix(
-            i = do.call(c, lapply(seq_along(spdensmz), function(i) {
-                               spdensmz[[i]][,1]
-                           })),
-            j = rep(seq_along(spdensmz), times = sapply(spdensmz, nrow)),
-            x = do.call(c, lapply(seq_along(spdensmz), function(i) {
-                               spdensmz[[i]][,2]
-                           })),
-            dims = c(nrow(bgcorrDT), length(spdensmz))
-        )
+        spmatmz <- getSparseMatrixMZ(spdensmz, bgcorrDT)
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
         if(verbose) {
@@ -322,18 +328,21 @@ densityEstimation <- function(object, dgridstep = dgridstep, dbandwidth = dbandw
         dtgscan <- data.table(gscan = gscan, row = seq_along(gscan))
         setkey(dtgscan, gscan)
         denom <- nrow(bgcorrDT)*prod(bw)*sum(bgcorrDT[,intensity])
+        getDensityEstimateSparseList <- function(gridseqScan, dtgscan, gscan, bgcorrDT, spmatmz) {
+            lapply(seq_along(gridseqScan), function(i) {
+                whg <- max(i - ng[2], 1):min(i + ng[2], length(gridseqScan))
+                at <- dtgscan[.(whg), row, nomatch = 0]
+                ## Do intensity weighting here
+                d <- dnorm((gridseqScan[i]-gscan[at])/bw[2])*bgcorrDT[at,intensity]
+                ## rep(1) instead of rep(i) because we're forming one column matrices
+                ## otherwise dims won't be correct
+                spmatscan <- sparseMatrix(i = at, j = rep(1, length(at)), x = d, dims = c(nrow(spmatmz), 1))
+                dens <- crossprod(spmatmz, spmatscan)/denom
+                return(dens)
+            })
+        }
         ptime1 <- proc.time()
-        dens <- lapply(seq_along(gridseqScan), function(i) {
-            whg <- max(i - ng[2], 1):min(i + ng[2], length(gridseqScan))
-            at <- dtgscan[.(whg), row, nomatch = 0]
-            ## Do intensity weighting here
-            d <- dnorm((gridseqScan[i]-gscan[at])/bw[2])*bgcorrDT[at,intensity]
-            ## rep(1) instead of rep(i) because we're forming one column matrices
-            ## otherwise dims won't be correct
-            spmatscan <- sparseMatrix(i = at, j = rep(1, length(at)), x = d, dims = c(nrow(spmatmz), 1))
-            dens <- crossprod(spmatmz, spmatscan)/denom
-            return(dens)
-        })
+        dens <- getDensityEstimateSparseList(gridseqScan, dtgscan, gscan, bgcorrDT, spmatmz)
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
         if(verbose) {
