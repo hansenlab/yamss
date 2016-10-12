@@ -1,4 +1,4 @@
-getCutoff <- function(object, by = 2, verbose = FALSE) {
+getCutoff <- function(object, mzSpacing = 2, verbose = FALSE) {
     if(verbose) {
         message("[getDensityCutoff] Get density cutoff")
     }
@@ -6,7 +6,7 @@ getCutoff <- function(object, by = 2, verbose = FALSE) {
     ptime1 <- proc.time()
     bgcorrDT <- .bgcorrDT(object)
     densmat <- densityEstimate(object)
-    mzregions <- seq(.minMZ(object), .maxMZ(object), by = by)
+    mzregions <- seq(.minMZ(object), .maxMZ(object), by = mzSpacing)
     setkey(bgcorrDT, mz)
     densmatMzs <- as.numeric(rownames(densmat))
     densmatScans <- as.numeric(colnames(densmat))
@@ -167,7 +167,7 @@ slicepi <- function(object, cutoff = NULL, verbose = TRUE) {
         if(verbose) {
             message("[slicepi] Computing cutoff")
         }
-        cutoff <- getCutoff(object = object, by = 2, verbose = subverbose)
+        cutoff <- getCutoff(object = object, mzSpacing = 2, verbose = subverbose)
         ## Get density quantiles and choose the higher of the two
         qcutoff <- which.min(abs(cutoff-densityQuantiles(object)))
         qs <- seq(0.001,0.999,0.001)
