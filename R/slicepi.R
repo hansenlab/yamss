@@ -4,8 +4,8 @@ getCutoff <- function(object, by = 2, verbose = FALSE) {
     }
     stopifnot(is(object, "CMSproc"))
     ptime1 <- proc.time()
-    bgcorrDT <- object@bgcorrDT
-    densmat <- object@density
+    bgcorrDT <- .bgcorrDT(object)
+    densmat <- densityEstimate(object)
     mzregions <- seq(.minMZ(object), .maxMZ(object), by = by)
     setkey(bgcorrDT, mz)
     densmatMzs <- as.numeric(rownames(densmat))
@@ -188,5 +188,5 @@ slicepi <- function(object, cutoff = NULL, verbose = TRUE) {
              rowData = DataFrame(peakBounds),
              colData = colData(object),
              metadata = metadata,
-             mzParams = object@mzParams)
+             mzParams = .mzParams(object))
 }

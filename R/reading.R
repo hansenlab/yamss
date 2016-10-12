@@ -47,13 +47,13 @@ readMSdata <- function(files, colData = NULL,
                      intensity = rawdatamat[,"intensity"],
                      scan = rawdatamat[,"scan"],
                      sample = rawdatamat[,"sample"])
-    cmsRaw@mzParams <- .setMZParams(rawDT)
-    cmsRaw@rawDT <- rawDT
+    .mzParams(cmsRaw) <- .setMZParams(rawDT)
+    .rawDT(cmsRaw) <- rawDT
     fileData <- DataFrame(sample = seq_along(files), files = files)
     if(is.null(colData)) {
-        cmsRaw@colData <- fileData
+        colData(cmsRaw) <- fileData
     } else {
-        cmsRaw@colData <- cbind(fileData, colData)
+        colData(cmsRaw) <- cbind(fileData, colData)
     }
     cmsRaw <- .subsetByMZ(cmsRaw, mzsubset = mzsubset)
     return(cmsRaw)

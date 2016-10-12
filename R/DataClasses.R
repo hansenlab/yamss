@@ -84,6 +84,15 @@ setMethod("show", signature(object = "CMSslice"),
     object@mzParams[["maxScan"]]
 }
 
+.mzParams <- function(object) {
+    object@mzParams
+}
+
+".mzParams<-" <- function(object, value) {
+    object@mzParams <- value
+    object
+}
+
 .sampleNumber <- function(object) {
     object@colData[, "sample"]
 }
@@ -93,10 +102,51 @@ setMethod("show", signature(object = "CMSslice"),
     object@rawDT
 }
 
+".rawDT<-" <- function(object, value) {
+    stopifnot(is(object, "CMSraw"))
+    object@rawDT <- value
+    object
+}
+
+.bgcorrDT <- function(object) {
+    stopifnot(is(object, "CMSproc"))
+    object@bgcorrDT
+}
+
+".bgcorrDT<-" <- function(object, value) {
+    stopifnot(is(object, "CMSproc"))
+    object@bgcorrDT <- value
+    object
+}
+
+".rtAlign<-" <- function(object, value) {
+    stopifnot(is(object, "CMSproc"))
+    object@rtAlign <- value
+    object
+}
+
+".densityEstimate<-" <- function(object, value) {
+    stopifnot(is(object, "CMSproc"))
+    object@density <- value
+    object
+}
+
+".densityQuantiles<-" <- function(object, value) {
+    stopifnot(is(object, "CMSproc"))
+    object@densityQuantiles <- value
+    object
+}
 
 ## Exported accessors
 setMethod("colData", signature(x = "CMSraw"), function(x) {
     x@colData
+})
+
+setGeneric("colData<-", function(object, value) standardGeneric("colData<-"))
+
+setReplaceMethod("colData", "CMSraw", function(object, value) {
+    object@colData <- value
+    object
 })
 
 densityEstimate <- function(object) {

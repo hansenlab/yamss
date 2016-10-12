@@ -27,8 +27,8 @@
     rawDT <- .rawDT(object)
     setkey(rawDT, mz, scan)
     mzseq <- seq(as.integer(mzsubset[1]*1e5), as.integer(mzsubset[2]*1e5))
-    object@rawDT <- rawDT[.(mzseq), nomatch = 0]
-    object@mzParams <- .setMZParams(.rawDT(object))
+    .rawDT(object) <- rawDT[.(mzseq), nomatch = 0]
+    .mzParams(object) <- .setMZParams(.rawDT(object))
     object
 }
 
@@ -140,14 +140,14 @@ backgroundCorrection <- function(object, verbose = FALSE) {
         message(sprintf("[backgroundCorrection] Correct intensities .. done in %.1f secs.", stime))
     }
     out <- as(object, "CMSproc")
-    out@bgcorrDT <- bgcorrDT
+    .bgcorrDT(out) <- bgcorrDT
     return(out)
 }
 
 rtAlignment <- function(object, verbose = FALSE) {
     stopifnot(is(object, "CMSproc"))
     rawDT <- .rawDT(object)
-    bgcorrDT <- object@bgcorrDT
+    bgcorrDT <- .bgcorrDT(object)
     if(verbose) {
         message("[rtAlignment] Get rough M/Z regions to align")
     }
@@ -250,16 +250,16 @@ rtAlignment <- function(object, verbose = FALSE) {
     if(verbose) {
         message(sprintf("[rtAlignment] Remap scans .. done in %.1f secs.", stime))
     }
-    object@rawDT <- rawDT
-    object@bgcorrDT <- bgcorrDT
-    object@rtAlign <- TRUE
+    .rawDT(object) <- rawDT
+    .bgcorrDT(object) <- bgcorrDT
+    .rtAlign(object) <- TRUE
     return(object)
 }
 
 densityEstimation <- function(object, dgridstep = dgridstep, dbandwidth = dbandwidth, 
                               outfileDens, verbose = FALSE) {
     stopifnot(is(object, "CMSproc"))
-    bgcorrDT <- object@bgcorrDT
+    bgcorrDT <- .bgcorrDT(object)
     getDensityEstimateApprox <- function(bgcorrDT, bw = dbandwidth,
                                          gridstep = dgridstep, maxbws = 4, mzParams) {
         gridseqMz <- seq(mzParams$minMZ, mzParams$maxMZ, gridstep[1])
@@ -382,7 +382,7 @@ densityEstimation <- function(object, dgridstep = dgridstep, dbandwidth = dbandw
         } else {
             ptime1 <- proc.time()
             densList <- getDensityEstimateApprox(bgcorrDT = bgcorrDT, bw = dbandwidth,
-                                                 gridstep = dgridstep, maxbws = 4, mzParams = object@mzParams)
+                                                 gridstep = dgridstep, maxbws = 4, mzParams = .mzParams(object))
             ptime2 <- proc.time()
             stime <- (ptime2 - ptime1)[3]
             if(verbose) {
@@ -394,7 +394,7 @@ densityEstimation <- function(object, dgridstep = dgridstep, dbandwidth = dbandw
     } else {
         ptime1 <- proc.time()
         densList <- getDensityEstimateApprox(bgcorrDT = bgcorrDT, bw = dbandwidth,
-                                             gridstep = dgridstep, maxbws = 4, mzParams = object@mzParams)
+                                             gridstep = dgridstep, maxbws = 4, mzParams = .mzParams(object))
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
         if(verbose) {
@@ -447,10 +447,10 @@ bakedpi <- function(cmsRaw, dbandwidth = c(0.005, 10),
     dmat <- densityEstimation(object = object, dbandwidth = dbandwidth,
                               dgridstep = dgridstep, outfileDens = outfileDens,
                               verbose = subverbose)$dmat
-    object@density <- dmat
+    .densityEstimate(object) <- dmat
     ## Compute and store density quantiles
     qs <- seq(0,1,0.001)
-    object@densityQuantiles <- quantile(dmat[dmat!=0], qs)
+    .densityQuantiles(object) <- quantile(dmat[dmat!=0], qs)
 
     return(object)
 }
