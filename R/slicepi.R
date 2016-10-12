@@ -46,10 +46,16 @@ getCutoff <- function(object, by = 2, verbose = FALSE) {
         names(numperscan) <- 1:.maxScan(object)
         numperscan <- numperscan[as.character(densmatScans)]
         scanIndex <- which.min(abs(densmatScans-scan))
-        left <- ifelse(sum(numperscan[scanIndex:1]==0)==0, 1, scanIndex-which.max(numperscan[scanIndex:1]==0)+1)
-        right <- ifelse(sum(numperscan[scanIndex:length(densmatScans)]==0)==0,
-                        length(densmatScans),
-                        scanIndex+which.max(numperscan[scanIndex:length(densmatScans)]==0)-1)
+        if (sum(numperscan[scanIndex:1]==0)==0) {
+            left <- 1
+        } else {
+            left <- scanIndex-which.max(numperscan[scanIndex:1]==0)+1
+        }
+        if (sum(numperscan[scanIndex:length(densmatScans)]==0)==0) {
+            right <- length(densmatScans)
+        } else {
+            right <- scanIndex+which.max(numperscan[scanIndex:length(densmatScans)]==0)-1
+        }
         return(as.numeric(densmat[densmatRows,left:right]))
     })
     ## Use features of the distribution of these density values to select a cutoff
