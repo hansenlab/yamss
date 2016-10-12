@@ -10,7 +10,6 @@ Authors@R: c(
 Depends:
     methods,
     BiocGenerics (>= 0.15.3),
-    limma,
     SummarizedExperiment
 Suggests:
     BiocStyle,
@@ -25,7 +24,8 @@ Imports:
     Matrix,
     mzR,
     data.table,
-    grDevices
+    grDevices,
+    limma
 VignetteBuilder: knitr
 License: Artistic-2.0
 URL: https://github.com/hansenlab/yamss
