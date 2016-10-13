@@ -13,7 +13,7 @@ getCutoff <- function(object, mzSpacing = 2, verbose = FALSE) {
     ## For each M/Z region, find the data point with the highest intensity
     ## Find the peak region corrresponding to this data point
     ## Get the density estimate values in this region
-    dlist <- lapply(1:(length(mzregions)-1), function(i) {
+    dlist <- lapply(seq_len(length(mzregions)-1), function(i) {
         ## Get the point with the highest intensity in this region
         mzseq <- seq(mzregions[i]*1e5, mzregions[i+1]*1e5-1)
         subdt <- bgcorrDT[.(mzseq), nomatch = 0]
@@ -43,7 +43,7 @@ getCutoff <- function(object, mzSpacing = 2, verbose = FALSE) {
         subdt <- subdt[, .N, by = scan]
         numperscan <- rep(0, .maxScan(object))
         numperscan[subdt[,scan]] <- subdt[,N]
-        names(numperscan) <- 1:.maxScan(object)
+        names(numperscan) <- .minScan(object):.maxScan(object)
         numperscan <- numperscan[as.character(densmatScans)]
         scanIndex <- which.min(abs(densmatScans-scan))
         if (sum(numperscan[scanIndex:1]==0)==0) {
@@ -116,7 +116,7 @@ getEICsAndQuantify <- function(object, peakBounds, verbose = FALSE) {
     rawDT <- .rawDT(object)
     setkey(rawDT, mz, scan)
     ptime1 <- proc.time()
-    eicsRaw <- lapply(1:nrow(peakBounds), function(i) {
+    eicsRaw <- lapply(seq_len(nrow(peakBounds)), function(i) {
         mzseq <- seq(as.integer(peakBounds[i,"mzmin"]*1e5), as.integer(peakBounds[i,"mzmax"]*1e5))
         dt <- rawDT[.(mzseq), nomatch = 0]
         dt <- dt[, eic := log2(max(intensity)+1), by = .(scan, sample)]
