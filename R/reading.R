@@ -1,6 +1,10 @@
 .getPeakInfo <- function(files) {
     isCDF <- length(grep("\\.cdf", files[1], ignore.case = TRUE))==1
-    backend <- ifelse(isCDF, "netCDF", "Ramp")
+    if (isCDF) {
+        backend <- "netCDF"
+    } else {
+        backend <- "Ramp"
+    }
     peakInfoAllfiles <- lapply(seq_along(files), function(i) {
         msobj <- openMSfile(files[i], backend = backend)
         peakInfo <- peaks(msobj)
@@ -19,6 +23,28 @@
         return(peakInfo)
     })
     return(peakInfoAllfiles)
+}
+
+.setMZParams <- function(rawDT) {
+    mzParams <- list(
+        minScan = min(rawDT[,scan]),
+        maxScan = max(rawDT[,scan]),
+        minMZraw = min(rawDT[,mz])/1e5,
+        maxMZraw = max(rawDT[,mz])/1e5,
+        minMZ = 10*floor(min(rawDT[,mz])/1e6),
+        maxMZ = 10*ceiling(max(rawDT[,mz])/1e6))
+    mzParams
+}
+    
+.subsetByMZ <- function(object, mzsubset = NULL) {
+    if(is.null(mzsubset))
+        return(object)
+    rawDT <- .rawDT(object)
+    setkey(rawDT, mz, scan)
+    mzseq <- seq(as.integer(mzsubset[1]*1e5), as.integer(mzsubset[2]*1e5))
+    .rawDT(object) <- rawDT[.(mzseq), nomatch = 0]
+    .mzParams(object) <- .setMZParams(.rawDT(object))
+    object
 }
 
 readMSdata <- function(files, colData = NULL,
@@ -45,11 +71,11 @@ readMSdata <- function(files, colData = NULL,
     colnames(rawdatamat) <- c("mz", "intensity", "scan", "sample")
     rawDT <- data.table(mz = as.integer(rawdatamat[,"mz"]*1e5),
                      intensity = rawdatamat[,"intensity"],
-                     scan = rawdatamat[,"scan"],
-                     sample = rawdatamat[,"sample"])
+                     scan = as.integer(rawdatamat[,"scan"]),
+                     sample = as.integer(rawdatamat[,"sample"]))
     .mzParams(cmsRaw) <- .setMZParams(rawDT)
     .rawDT(cmsRaw) <- rawDT
-    fileData <- DataFrame(sample = seq_along(files), files = files)
+    fileData <- DataFrame(sample = as.integer(seq_along(files)), files = files)
     if(is.null(colData)) {
         colData(cmsRaw) <- fileData
     } else {

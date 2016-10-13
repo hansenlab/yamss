@@ -50,6 +50,7 @@ using \code{CMSslice}.
 }
 
 \examples{
+## Construct a fake class
 quants <- matrix(rnorm(12*5000), nrow = 5000, ncol = 12)
 bounds <- cbind(mzmin = seq(from = 100, to = 1100, length.out = 5000),
                 mzmax = seq(from = 100, to = 1100, length.out = 5000) + 0.1,
@@ -58,4 +59,16 @@ bounds <- cbind(mzmin = seq(from = 100, to = 1100, length.out = 5000),
 cmsobj <- CMSslice(assays = SimpleList(peakQuants = quants),
                    rowData = DataFrame(bounds))
 head(peakQuants(cmsobj))
+
+## A better example which takes 20s to run
+\dontrun{
+
+data(cmsRawExample)
+cmsProc <- bakedpi(cmsRawExample,
+                   dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
+                   dortalign = TRUE, mzsubset = c(500,510))
+cutoff <- densityQuantiles(cmsProc)["99.9%"]
+sliced <- slicepi(cmsProc, cutoff = cutoff, verbose = TRUE)
+sliced
+}
 }
