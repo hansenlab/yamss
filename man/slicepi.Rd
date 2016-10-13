@@ -32,6 +32,6 @@ data(cmsRawExample)
 cmsProc <- bakedpi(cmsRawExample, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
                    outfileDens = NULL, dortalign = FALSE, verbose = TRUE)
 dqs <- densityQuantiles(cmsProc)
-cmsSlice <- slicepi(cmsProc, cutoff = dqs["99.5"], verbose = TRUE)
+cmsSlice <- slicepi(cmsProc, cutoff = dqs[996], verbose = TRUE)
 cmsSlice
 }
