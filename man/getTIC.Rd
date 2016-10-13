@@ -19,13 +19,7 @@ are on the log2 scale. This requires a \code{CMSraw} object, typically
 produced from \code{readMSdata}.
 }
 \examples{
-if (require(mtbls2)) {
-data(mtbls2)
-filepath <- file.path(find.package("mtbls2"), "mzData")
-file <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)[1]
-colData <- DataFrame(group = "wild-type")
-cmsRaw <- readMSdata(files = file, colData = colData, verbose = TRUE)
-tic <- getTIC(cmsRaw, sample = 1)
+data(cmsRawExample)
+tic <- getTIC(cmsRawExample, sample = 1)
 head(tic)
-}
 }
