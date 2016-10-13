@@ -43,7 +43,7 @@ getCutoff <- function(object, mzSpacing = 2, verbose = FALSE) {
         subdt <- subdt[, .N, by = scan]
         numperscan <- rep(0, .maxScan(object))
         numperscan[subdt[,scan]] <- subdt[,N]
-        names(numperscan) <- .minScan(object):.maxScan(object)
+        names(numperscan) <- 1:.maxScan(object)
         numperscan <- numperscan[as.character(densmatScans)]
         scanIndex <- which.min(abs(densmatScans-scan))
         if (sum(numperscan[scanIndex:1]==0)==0) {
