@@ -15,7 +15,8 @@ Suggests:
     BiocStyle,
     knitr,
     rmarkdown,
-    mtbls2
+    mtbls2,
+    testthat
 Imports:
     IRanges,
     stats,

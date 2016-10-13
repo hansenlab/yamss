@@ -10,7 +10,7 @@ if (require(mtbls2)) {
 	test_that("rawDT has correct properties", {
 		expect_equal(length(unique(rawDT[,sample])), length(files))
 		expect_true(all(is.integer(rawDT[,mz])))
-		expect_true(all(is.integer(rawDT[,scan])))
 		expect_true(all(rawDT[,intensity] > 0))
+		expect_true(all(rawDT[,scan] > 0))
 	})
 }
