@@ -79,7 +79,7 @@ backgroundCorrection <- function(object, verbose = FALSE) {
                                                                  weight = as.numeric(weightmat))
                                                 df <- df[complete.cases(df),]
                                                 lofit <- loess(intens ~ scan, data = df, weights = weight, span = 0.1)
-                                                predict(lofit, .minScan(object):.maxScan(object))
+                                                predict(lofit, 1:.maxScan(object))
                                             }))
         mzbounds <- cbind(head(mzbreaks, -1), tail(mzbreaks, -1))
         mzbounds <- mzbounds[keepcols,,drop = FALSE]
