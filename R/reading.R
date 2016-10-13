@@ -25,6 +25,28 @@
     return(peakInfoAllfiles)
 }
 
+.setMZParams <- function(rawDT) {
+    mzParams <- list(
+        minScan = min(rawDT[,scan]),
+        maxScan = max(rawDT[,scan]),
+        minMZraw = min(rawDT[,mz])/1e5,
+        maxMZraw = max(rawDT[,mz])/1e5,
+        minMZ = 10*floor(min(rawDT[,mz])/1e6),
+        maxMZ = 10*ceiling(max(rawDT[,mz])/1e6))
+    mzParams
+}
+    
+.subsetByMZ <- function(object, mzsubset = NULL) {
+    if(is.null(mzsubset))
+        return(object)
+    rawDT <- .rawDT(object)
+    setkey(rawDT, mz, scan)
+    mzseq <- seq(as.integer(mzsubset[1]*1e5), as.integer(mzsubset[2]*1e5))
+    .rawDT(object) <- rawDT[.(mzseq), nomatch = 0]
+    .mzParams(object) <- .setMZParams(.rawDT(object))
+    object
+}
+
 readMSdata <- function(files, colData = NULL,
                        mzsubset = NULL, verbose = FALSE) {
     if(verbose) {
