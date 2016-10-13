@@ -10,26 +10,26 @@ utils::globalVariables(c("peaknum", "mzmin", "mzmax", "weight", "bg", "gmz",
     stopifnot(vec[1] > 0)
 }
 
-.digestDataTableRaw <- function(dt, digits = 6) {
+.digestDataTableRaw <- function(dt) {
     content <- matrix("", nrow = nrow(dt), ncol = 4)
     colnames(content) <- c("mz", "intensity", "scan", "sample")
     content[, "mz"] <- as.character(dt$mz)
     content[, "scan"] <- as.character(dt$scan)
     content[, "sample"] <- as.character(dt$sample)
-    content[, "intensity"] <- sprintf(paste0("%.", digits, "f"), dt$intensity)
+    content[, "intensity"] <- sprintf("%.3f", dt$intensity)
     ## Handling signed zero as per IEEE specs
     zero <- paste(c("0.", rep("0", digits)), collapse = "")
     content[content == paste0("-", zero)] <- zero
     digest::digest(content)
 }
 
-.digestDataTableBG <- function(dt, digits = 6) {
+.digestDataTableBG <- function(dt) {
     if(all(c("gmz", "gscan") %in% colnames(dt))) {
         content <- matrix("", nrow = nrow(dt), ncol = 6)
         colnames(content) <- c("mz", "intensity", "scan", "sample",
                                "gmz", "gscan")
-        content[, "gmz"] <- sprintf(paste0("%.", digits, "f"), dt$gmz)
-        content[, "gscan"] <- sprintf(paste0("%.", digits, "f"), dt$gscan)
+        content[, "gmz"] <- sprintf("%.3f", dt$gmz)
+        content[, "gscan"] <- sprintf("%.3f", dt$gscan)
     } else {
         content <- matrix("", nrow = nrow(dt), ncol = 4)
         colnames(content) <- c("mz", "intensity", "scan", "sample")
@@ -37,7 +37,7 @@ utils::globalVariables(c("peaknum", "mzmin", "mzmax", "weight", "bg", "gmz",
     content[, "mz"] <- as.character(dt$mz)
     content[, "scan"] <- as.character(dt$scan)
     content[, "sample"] <- as.character(dt$sample)
-    content[, "intensity"] <- sprintf(paste0("%.", digits, "f"), dt$intensity)
+    content[, "intensity"] <- sprintf("%.3f", dt$intensity)
     ## Handling signed zero as per IEEE specs
     zero <- paste(c("0.", rep("0", digits)), collapse = "")
     content[content == paste0("-", zero)] <- zero
