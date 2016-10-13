@@ -1,6 +1,6 @@
 library(yamss)
 context("Testing Background Correction")
-load(file.path(path.package("yamss"), "scripts", "digesst.rda"))
+load(file.path(path.package("yamss"), "scripts", "digests.rda"))
 data(cmsRawExample)
 background <- yamss:::backgroundCorrection(cmsRawExample)
 test_that("Background correction", {
