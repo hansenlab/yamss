@@ -80,6 +80,10 @@ setMethod("show", signature(object = "CMSslice"),
     object@mzParams[["maxMZ"]]
 }
 
+.minScan <- function(object) {
+    object@mzParams[["minScan"]]
+}
+
 .maxScan <- function(object) {
     object@mzParams[["maxScan"]]
 }
