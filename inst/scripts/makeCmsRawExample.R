@@ -8,7 +8,7 @@ classes <- rep(c("wild-type", "mutant"), each = 2)
 colData <- DataFrame(sampClasses = classes, ionmode = "pos")
 cmsRawExample <- readMSdata(files = files, colData = colData, mzsubset = c(500,502), verbose = TRUE)
 format(object.size(cmsRawExample), units = "Mb")
-save(cmsRawExample, file = "../../data/cmsRawExample.rda")
+save(cmsRawExample, file = "../../data/cmsRawExample.rda", compress = "xz")
 
 
 cmsProcExample <- bakedpi(cmsRawExample, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
