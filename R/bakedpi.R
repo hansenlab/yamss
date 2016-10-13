@@ -69,7 +69,7 @@ backgroundCorrection <- function(object, verbose = FALSE) {
         bgmeanmatThisSample <- bgmeanmatThisSample[,keepcols, drop = FALSE]
         ## Each col is a smoothed background trend across scans for a particular M/Z region
         bgmeanmatSmoothed <- do.call(cbind, lapply(seq_len(ncol(bgmeanmatThisSample)), function(i) {
-                                                dists <- (1:ncol(bgmeanmatThisSample))-i
+                                                dists <- seq_len(ncol(bgmeanmatThisSample)) - i
                                                 wts <- dnorm(dists/4)
                                                 weightmat <- matrix(wts, nrow = nrow(bgmeanmatThisSample),
                                                                     ncol = ncol(bgmeanmatThisSample), byrow = TRUE)
@@ -79,7 +79,7 @@ backgroundCorrection <- function(object, verbose = FALSE) {
                                                                  weight = as.numeric(weightmat))
                                                 df <- df[complete.cases(df),]
                                                 lofit <- loess(intens ~ scan, data = df, weights = weight, span = 0.1)
-                                                predict(lofit, 1:.maxScan(object))
+                                                predict(lofit, seq_len(.maxScan(object)))
                                             }))
         mzbounds <- cbind(head(mzbreaks, -1), tail(mzbreaks, -1))
         mzbounds <- mzbounds[keepcols,,drop = FALSE]
