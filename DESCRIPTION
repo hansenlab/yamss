@@ -15,6 +15,7 @@ Suggests:
     BiocStyle,
     knitr,
     rmarkdown,
+    digest,
     mtbls2,
     testthat
 Imports:
