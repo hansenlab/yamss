@@ -19,11 +19,10 @@ backgroundCorrection <- function(object, verbose = FALSE) {
     if(verbose) {
         message("[backgroundCorrection] Get marginal intensities")
     }
-    ptime1 <- proc.time()
-    densGrid <- lapply(seq_len(length(mzbreaks)-1), function(m) {
+    getScanWindowIntensDistsAtThisMZ <- function(m) {
         mzseq <- seq(as.integer(mzbreaks[m]*1e5), as.integer(mzbreaks[m+1]*1e5))
         DTmz <- rawDT[.(mzseq), nomatch = 0]
-        lapply(seq_len(length(scanbreaks)-1), function(rt) {
+        getSampleSpecificIntensDistsAtThisScan <- function(rt) {
             DTmzscan <- DTmz[scan %in% scanbreaks[rt]:scanbreaks[rt+1]]
             lapply(.sampleNumber(object), function(s) {
                 logintens <- log2(DTmzscan[sample==s, intensity] + 1)
@@ -31,8 +30,11 @@ backgroundCorrection <- function(object, verbose = FALSE) {
                     return(NA)
                 density(logintens)
             })
-        })
-    })
+        }
+        lapply(seq_len(length(scanbreaks)-1), getSampleSpecificIntensDistsAtThisScan)
+    }
+    ptime1 <- proc.time()
+    densGrid <- lapply(seq_len(length(mzbreaks)-1), getScanWindowIntensDistsAtThisMZ)
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) {
@@ -41,17 +43,20 @@ backgroundCorrection <- function(object, verbose = FALSE) {
     ## Estimate retention time window-specific background levels
     bgsd <- 0 # SD of normal distribution characterizing noise intensities
     r <- dnorm(bgsd)/dnorm(0)
+    getBackgroundMeanAtThisMZScanSample <- function(m, rt, s) {
+        dens <- densGrid[[m]][[rt]][[s]]
+        if (class(dens)=="density") {
+            indexFirstPeak <- which.max(diff(dens$y) < 0)
+            densCutoff <- dens$y[indexFirstPeak]*r
+            bgindex <- which.max(dens$y <= densCutoff & c(rep(FALSE, indexFirstPeak), rep(TRUE, length(dens$y)-indexFirstPeak)))
+            return(dens$x[bgindex])
+        }
+        return(NA)
+    }
     bgmeans <- lapply(seq_len(length(mzbreaks)-1), function(m) {
         lapply(seq_len(length(scanbreaks)-1), function(rt) {
             lapply(.sampleNumber(object), function(s) {
-                dens <- densGrid[[m]][[rt]][[s]]
-                if (class(dens)=="density") {
-                    indexFirstPeak <- which.max(diff(dens$y) < 0)
-                    densCutoff <- dens$y[indexFirstPeak]*r
-                    bgindex <- which.max(dens$y <= densCutoff & c(rep(FALSE, indexFirstPeak), rep(TRUE, length(dens$y)-indexFirstPeak)))
-                    return(dens$x[bgindex])
-                }
-                return(NA)
+                getBackgroundMeanAtThisMZScanSample(m, rt, s)
             })
         })
     })
@@ -59,28 +64,36 @@ backgroundCorrection <- function(object, verbose = FALSE) {
         message("[backgroundCorrection] Get region-specific background trends")
     }
     ptime1 <- proc.time()
+    getBackgroundMeanMatrixForSample <- function(s) {
+        ## Loop over M/Z windowd. Then loop over scan windows.
+        do.call(cbind, lapply(bgmeans, function(mzList) {
+            sapply(mzList, function(scanList) { scanList[[s]] })
+        }))
+    }
+    smoothBackgroundMeans <- function(bgmeanmatThisSample) {
+        do.call(cbind, lapply(seq_len(ncol(bgmeanmatThisSample)), function(i) {
+            ## Weight nearby M/Z windows more in the smoothing
+            dists <- seq_len(ncol(bgmeanmatThisSample)) - i
+            wts <- dnorm(dists/4)
+            weightmat <- matrix(wts, nrow = nrow(bgmeanmatThisSample), ncol = ncol(bgmeanmatThisSample), byrow = TRUE)
+            df <- data.frame(intens = as.numeric(bgmeanmatThisSample), 
+                             scan = rep(head(scanbreaks, -1), times = ncol(bgmeanmatThisSample)), 
+                             weight = as.numeric(weightmat))
+            df <- df[complete.cases(df),]
+            lofit <- loess(intens ~ scan, data = df, weights = weight, span = 0.1)
+            predict(lofit, seq_len(.maxScan(object)))
+        }))
+    }
+    ## For each sample, get the background mean trend as a function of scan
+    ## for the different M/Z windows
     smooths <- lapply(.sampleNumber(object), function(s) {
-        ## rows = scans, cols = M/Z bins
+        ## For bgmeanmatThisSample: rows = scans, cols = M/Z bins
         ## Each col is the background trend across scans for a particular M/Z region
-        bgmeanmatThisSample <- do.call(cbind, lapply(bgmeans, function(mzList) {
-                                                  sapply(mzList, function(scanList) { scanList[[s]] })
-                                              }))
+        bgmeanmatThisSample <- getBackgroundMeanMatrixForSample(s)
         keepcols <- colSums(!is.na(bgmeanmatThisSample))!=0
         bgmeanmatThisSample <- bgmeanmatThisSample[,keepcols, drop = FALSE]
         ## Each col is a smoothed background trend across scans for a particular M/Z region
-        bgmeanmatSmoothed <- do.call(cbind, lapply(seq_len(ncol(bgmeanmatThisSample)), function(i) {
-                                                dists <- seq_len(ncol(bgmeanmatThisSample)) - i
-                                                wts <- dnorm(dists/4)
-                                                weightmat <- matrix(wts, nrow = nrow(bgmeanmatThisSample),
-                                                                    ncol = ncol(bgmeanmatThisSample), byrow = TRUE)
-                                                df <- data.frame(intens = as.numeric(bgmeanmatThisSample),
-                                                                 scan = rep(head(scanbreaks, -1),
-                                                                            times = ncol(bgmeanmatThisSample)),
-                                                                 weight = as.numeric(weightmat))
-                                                df <- df[complete.cases(df),]
-                                                lofit <- loess(intens ~ scan, data = df, weights = weight, span = 0.1)
-                                                predict(lofit, seq_len(.maxScan(object)))
-                                            }))
+        bgmeanmatSmoothed <- smoothBackgroundMeans(bgmeanmatThisSample)
         mzbounds <- cbind(head(mzbreaks, -1), tail(mzbreaks, -1))
         mzbounds <- mzbounds[keepcols,,drop = FALSE]
         attr(bgmeanmatSmoothed, "mzbounds") <- mzbounds
@@ -152,14 +165,16 @@ rtAlignment <- function(object, verbose = FALSE) {
     ptime1 <- proc.time()
     eics <- getEICS(object, mzranges = irmzr)
     scans <- 1:.maxScan(object)
-    eicsImputed <- lapply(eics, function(x) {
-        do.call(cbind, lapply(seq_len(ncol(x)), function(col) {
-                           bool <- x[,col] > 1e-6
+    imputeEIC <- function(eicmat) {
+        ## Loop over each sample (columns) and interpolate
+        do.call(cbind, lapply(seq_len(ncol(eicmat)), function(col) {
+                           bool <- eicmat[,col] > 1e-6
                            if (sum(bool) < 2)
-                               return(x[,col])
-                           approx(scans[bool], x[bool,col], xout = scans, rule = 2)$y
+                               return(eicmat[,col])
+                           approx(scans[bool], eicmat[bool,col], xout = scans, rule = 2)$y
                        }))
-    })
+    }
+    eicsImputed <- lapply(eics, imputeEIC)
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) {
@@ -167,37 +182,43 @@ rtAlignment <- function(object, verbose = FALSE) {
         message("[rtAlignment] Find best shifts")
     }
     ptime1 <- proc.time()
-    shifts <- -20:20
     bgcorrDT[, scanorig := scan]
     rawDT[, scanorig := scan]
-    shiftsList <- lapply(seq_along(irmzr), function(i) {
+    shifts <- -20:20
+    getCorrsByShift <- function(eicimpmat, refsamp, sampIndex) {
+        sapply(shifts, function(shift) {
+                if (shift < 0) {
+                    x <- tail(eicimpmat[,sampIndex], shift)
+                    ref <- head(eicimpmat[,refsamp], shift)
+                } else if (shift==0) {
+                    x <- eicimpmat[,sampIndex]
+                    ref <- eicimpmat[,refsamp]
+                } else {
+                    x <- head(eicimpmat[,sampIndex], -shift)
+                    ref <- tail(eicimpmat[,refsamp], -shift)
+                }
+                cor(x, ref)
+            })
+    }
+    getSampleSpecificShiftsThisMZRegion <- function(i) {
         eicmat <- eics[[i]]
         eicimpmat <- eicsImputed[[i]]
+        ## Set the reference sample as the one with the 
+        ## largest total intensity in the EIC
         refsamp <- which.max(colSums(eicmat))
         bestShiftBySample <- sapply(.sampleNumber(object), function(s) {
             if (s==refsamp) {
                 return(0)
             }
-            corrShifts <- sapply(shifts, function(shift) {
-                if (shift < 0) {
-                    x <- tail(eicimpmat[,s], shift)
-                    ref <- head(eicimpmat[,refsamp], shift)
-                } else if (shift==0) {
-                    x <- eicimpmat[,s]
-                    ref <- eicimpmat[,refsamp]
-                } else {
-                    x <- head(eicimpmat[,s], -shift)
-                    ref <- tail(eicimpmat[,refsamp], -shift)
-                }
-                cor(x, ref)
-            })
+            corrShifts <- getCorrsByShift(eicimpmat, refsamp, s)
             if (sum(!is.na(corrShifts))==0) {
                 return(0)
             }
             shifts[which.max(corrShifts)]
         })
         return(bestShiftBySample)
-    })
+    }
+    shiftsList <- lapply(seq_along(irmzr), getSampleSpecificShiftsThisMZRegion)
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) {
