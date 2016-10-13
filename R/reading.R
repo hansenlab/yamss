@@ -71,11 +71,11 @@ readMSdata <- function(files, colData = NULL,
     colnames(rawdatamat) <- c("mz", "intensity", "scan", "sample")
     rawDT <- data.table(mz = as.integer(rawdatamat[,"mz"]*1e5),
                      intensity = rawdatamat[,"intensity"],
-                     scan = rawdatamat[,"scan"],
-                     sample = rawdatamat[,"sample"])
+                     scan = as.integer(rawdatamat[,"scan"]),
+                     sample = as.integer(rawdatamat[,"sample"]))
     .mzParams(cmsRaw) <- .setMZParams(rawDT)
     .rawDT(cmsRaw) <- rawDT
-    fileData <- DataFrame(sample = seq_along(files), files = files)
+    fileData <- DataFrame(sample = as.integer(seq_along(files)), files = files)
     if(is.null(colData)) {
         colData(cmsRaw) <- fileData
     } else {
