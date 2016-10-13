@@ -11,7 +11,7 @@ utils::globalVariables(c("peaknum", "mzmin", "mzmax", "weight", "bg", "gmz",
 }
 
 .digestDataTableRaw <- function(dt, digits = 6) {
-    content <- matrix("", nrow = nrow(df), ncol = 4)
+    content <- matrix("", nrow = nrow(dt), ncol = 4)
     colnames(content) <- c("mz", "intensity", "scan", "sample")
     content[, "mz"] <- as.character(dt$mz)
     content[, "scan"] <- as.character(dt$scan)
@@ -25,13 +25,13 @@ utils::globalVariables(c("peaknum", "mzmin", "mzmax", "weight", "bg", "gmz",
 
 .digestDataTableBG <- function(dt, digits = 6) {
     if(all(c("gmz", "gscan") %in% colnames(dt))) {
-        content <- matrix("", nrow = nrow(df), ncol = 6)
+        content <- matrix("", nrow = nrow(dt), ncol = 6)
         colnames(content) <- c("mz", "intensity", "scan", "sample",
                                "gmz", "scan")
         content[, "gmz"] <- sprintf(paste0("%.", digits, "f"), dt$gmz)
         content[, "gscan"] <- sprintf(paste0("%.", digits, "f"), dt$gscan)
     } else {
-        content <- matrix("", nrow = nrow(df), ncol = 4)
+        content <- matrix("", nrow = nrow(dt), ncol = 4)
         colnames(content) <- c("mz", "intensity", "scan", "sample")
     }
     content[, "mz"] <- as.character(dt$mz)
