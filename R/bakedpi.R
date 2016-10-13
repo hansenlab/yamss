@@ -388,6 +388,9 @@ bakedpi <- function(cmsRaw, dbandwidth = c(0.005, 10),
     object <- backgroundCorrection(object = cmsRaw, verbose = subverbose)
 
     if (dortalign) {
+        if(verbose) {
+            message("[bakedpi] Retention time alignment")
+        }
         object <- rtAlignment(object = object, verbose = subverbose)
     }
 
