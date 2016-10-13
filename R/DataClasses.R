@@ -146,11 +146,10 @@ setMethod("colData", signature(x = "CMSraw"), function(x) {
     x@colData
 })
 
-setGeneric("colData<-", function(object, value) standardGeneric("colData<-"))
-
-setReplaceMethod("colData", "CMSraw", function(object, value) {
-    object@colData <- value
-    object
+setReplaceMethod("colData", c("CMSraw", "DataFrame"),
+                 function(x, ..., value) {
+    x@colData <- value
+    x
 })
 
 densityEstimate <- function(object) {

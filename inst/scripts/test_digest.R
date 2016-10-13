@@ -16,6 +16,11 @@ baked <- bakedpi(cmsRawExample, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1)
 digests$bakedRaw <- yamss:::.digestDataTableRaw(yamss:::.rawDT(baked))
 digests$bakedCorr <- yamss:::.digestDataTableBG(yamss:::.bgcorrDT(baked))
 
+cutoff <- densityQuantiles(baked)["99.9%"]
+sliced <- slicepi(baked, cutoff = cutoff, verbose = TRUE)
+digests$slicedRowData <- yamss:::.digestRowData(rowData(sliced))
+digests$slicedPeakQuants <- yamss:::.digestPeakQuants(peakQuants(sliced))
+
 save(digests, file = "digests.rda")                                                  
 sessionInfo()
 
