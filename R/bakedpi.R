@@ -151,7 +151,7 @@ rtAlignment <- function(object, verbose = FALSE) {
     }
     ptime1 <- proc.time()
     eics <- getEICS(object, mzranges = irmzr)
-    scans <- .minScan(object):.maxScan(object)
+    scans <- 1:.maxScan(object)
     eicsImputed <- lapply(eics, function(x) {
         do.call(cbind, lapply(seq_len(ncol(x)), function(col) {
                            bool <- x[,col] > 1e-6
