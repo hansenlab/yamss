@@ -17,7 +17,14 @@ test_that("Retention time alignment", {
 
 baked <- bakedpi(cmsRawExample, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
                  dortalign = TRUE, mzsubset = c(500, 510))
-test_that("Baked pi", {
+test_that("bakedpi", {
     expect_equal(yamss:::.digestDataTableRaw(yamss:::.rawDT(baked)), digests$bakedRaw)
     expect_equal(yamss:::.digestDataTableBG(yamss:::.bgcorrDT(baked)), digests$bakedCorr)
+})
+
+cutoff <- densityQuantiles(baked)["99.9%"]
+sliced <- slicepi(baked, cutoff = cutoff, verbose = TRUE)
+test_that("slicepi", {
+    expect_equal(yamss:::.digestRowData(rowData(sliced)), digests$slicedRowData)
+    expect_equal(yamss:::.digestPeakQuants(peakQuants(sliced)), digests$slicedPeakQuants)
 })
