@@ -27,7 +27,7 @@ utils::globalVariables(c("peaknum", "mzmin", "mzmax", "weight", "bg", "gmz",
     if(all(c("gmz", "gscan") %in% colnames(dt))) {
         content <- matrix("", nrow = nrow(dt), ncol = 6)
         colnames(content) <- c("mz", "intensity", "scan", "sample",
-                               "gmz", "scan")
+                               "gmz", "gscan")
         content[, "gmz"] <- sprintf(paste0("%.", digits, "f"), dt$gmz)
         content[, "gscan"] <- sprintf(paste0("%.", digits, "f"), dt$gscan)
     } else {

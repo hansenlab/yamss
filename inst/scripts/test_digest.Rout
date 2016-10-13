@@ -65,9 +65,23 @@ Welcome to Bioconductor
 
 > data(cmsRawExample)
 > digests <- list()
+> 
 > background <- yamss:::backgroundCorrection(cmsRawExample)
 > digests$backgroundRaw <- yamss:::.digestDataTableRaw(yamss:::.rawDT(background))
 > digests$backgroundCorr <- yamss:::.digestDataTableBG(yamss:::.bgcorrDT(background))
+> 
+> rtAlign <- yamss:::rtAlignment(background)
+> digests$rtRaw <- yamss:::.digestDataTableRaw(yamss:::.rawDT(rtAlign))
+> digests$rtCorr <- yamss:::.digestDataTableBG(yamss:::.bgcorrDT(rtAlign))
+> 
+> baked <- bakedpi(cmsRawExample, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
++                  dortalign = TRUE, mzsubset = c(500, 510))
+[bakedpi] Background correction
+[bakedpi] Retention time alignment
+[bakedpi] Density estimation
+> digests$bakedRaw <- yamss:::.digestDataTableRaw(yamss:::.rawDT(baked))
+> digests$bakedCorr <- yamss:::.digestDataTableBG(yamss:::.bgcorrDT(baked))
+> 
 > save(digests, file = "digests.rda")                                                  
 > sessionInfo()
 R version 3.3.1 Patched (2016-08-19 r71122)
@@ -98,4 +112,4 @@ loaded via a namespace (and not attached):
 > 
 > proc.time()
    user  system elapsed 
-  7.392   0.312   7.894 
+ 25.836   0.564  26.744 
