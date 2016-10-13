@@ -9,44 +9,21 @@
 ## 8. Quantify
 ## 9. Differential analysis
 
-
-.setMZParams <- function(rawDT) {
-    mzParams <- list(
-        mminScan = min(rawDT[,scan]),
-        maxScan = max(rawDT[,scan]),
-        minMZraw = min(rawDT[,mz])/1e5,
-        maxMZraw = max(rawDT[,mz])/1e5,
-        minMZ = 10*floor(min(rawDT[,mz])/1e6),
-        maxMZ = 10*ceiling(max(rawDT[,mz])/1e6))
-    mzParams
-}
-    
-.subsetByMZ <- function(object, mzsubset = NULL) {
-    if(is.null(mzsubset))
-        return(object)
-    rawDT <- .rawDT(object)
-    setkey(rawDT, mz, scan)
-    mzseq <- seq(as.integer(mzsubset[1]*1e5), as.integer(mzsubset[2]*1e5))
-    .rawDT(object) <- rawDT[.(mzseq), nomatch = 0]
-    .mzParams(object) <- .setMZParams(.rawDT(object))
-    object
-}
-
 backgroundCorrection <- function(object, verbose = FALSE) {
     stopifnot(is(object, "CMSraw"))
     rawDT <- .rawDT(object)
     setkey(rawDT, mz, scan, sample)
-    mzbreaks <- c(seq(.minMZ(object), .maxMZ(object), by = 10), .maxMZ(object))
+    mzbreaks <- unique(c(seq(.minMZ(object), .maxMZ(object), by = 10), .maxMZ(object)))
     scanbreaks <- seq(1, .maxScan(object), 40)
     scanbreaks[length(scanbreaks)] <- .maxScan(object)
     if(verbose) {
         message("[backgroundCorrection] Get marginal intensities")
     }
     ptime1 <- proc.time()
-    densGrid <- lapply(1:(length(mzbreaks)-1), function(m) {
+    densGrid <- lapply(seq_len(length(mzbreaks)-1), function(m) {
         mzseq <- seq(as.integer(mzbreaks[m]*1e5), as.integer(mzbreaks[m+1]*1e5))
         DTmz <- rawDT[.(mzseq), nomatch = 0]
-        lapply(1:(length(scanbreaks)-1), function(rt) {
+        lapply(seq_len(length(scanbreaks)-1), function(rt) {
             DTmzscan <- DTmz[scan %in% scanbreaks[rt]:scanbreaks[rt+1]]
             lapply(.sampleNumber(object), function(s) {
                 logintens <- log2(DTmzscan[sample==s, intensity] + 1)
@@ -64,8 +41,8 @@ backgroundCorrection <- function(object, verbose = FALSE) {
     ## Estimate retention time window-specific background levels
     bgsd <- 0 # SD of normal distribution characterizing noise intensities
     r <- dnorm(bgsd)/dnorm(0)
-    bgmeans <- lapply(1:(length(mzbreaks)-1), function(m) {
-        lapply(1:(length(scanbreaks)-1), function(rt) {
+    bgmeans <- lapply(seq_len(length(mzbreaks)-1), function(m) {
+        lapply(seq_len(length(scanbreaks)-1), function(rt) {
             lapply(.sampleNumber(object), function(s) {
                 dens <- densGrid[[m]][[rt]][[s]]
                 if (class(dens)=="density") {
@@ -89,10 +66,10 @@ backgroundCorrection <- function(object, verbose = FALSE) {
                                                   sapply(mzList, function(scanList) { scanList[[s]] })
                                               }))
         keepcols <- colSums(!is.na(bgmeanmatThisSample))!=0
-        bgmeanmatThisSample <- bgmeanmatThisSample[,keepcols]
+        bgmeanmatThisSample <- bgmeanmatThisSample[,keepcols, drop = FALSE]
         ## Each col is a smoothed background trend across scans for a particular M/Z region
-        bgmeanmatSmoothed <- do.call(cbind, lapply(1:ncol(bgmeanmatThisSample), function(i) {
-                                                dists <- (1:ncol(bgmeanmatThisSample))-i
+        bgmeanmatSmoothed <- do.call(cbind, lapply(seq_len(ncol(bgmeanmatThisSample)), function(i) {
+                                                dists <- seq_len(ncol(bgmeanmatThisSample)) - i
                                                 wts <- dnorm(dists/4)
                                                 weightmat <- matrix(wts, nrow = nrow(bgmeanmatThisSample),
                                                                     ncol = ncol(bgmeanmatThisSample), byrow = TRUE)
@@ -102,10 +79,10 @@ backgroundCorrection <- function(object, verbose = FALSE) {
                                                                  weight = as.numeric(weightmat))
                                                 df <- df[complete.cases(df),]
                                                 lofit <- loess(intens ~ scan, data = df, weights = weight, span = 0.1)
-                                                predict(lofit, 1:.maxScan(object))
+                                                predict(lofit, seq_len(.maxScan(object)))
                                             }))
         mzbounds <- cbind(head(mzbreaks, -1), tail(mzbreaks, -1))
-        mzbounds <- mzbounds[keepcols,]
+        mzbounds <- mzbounds[keepcols,,drop = FALSE]
         attr(bgmeanmatSmoothed, "mzbounds") <- mzbounds
         return(bgmeanmatSmoothed)
     })
@@ -124,7 +101,7 @@ backgroundCorrection <- function(object, verbose = FALSE) {
     bgcorrDT <- rbindlist(lapply(.sampleNumber(object), function(s) {
         bgmeanmatSmoothed <- smooths[[s]]
         mzbounds <- attr(bgmeanmatSmoothed, "mzbounds")
-        rbindlist(lapply(1:nrow(mzbounds), function(i) {
+        rbindlist(lapply(seq_len(nrow(mzbounds)), function(i) {
             mzseq <- seq(as.integer(mzbounds[i,1]*1e5), as.integer(mzbounds[i,2]*1e5))
             bgtrend <- bgmeanmatSmoothed[,i]
             bgtrend[is.na(bgtrend)] <- 0
@@ -176,7 +153,7 @@ rtAlignment <- function(object, verbose = FALSE) {
     eics <- getEICS(object, mzranges = irmzr)
     scans <- 1:.maxScan(object)
     eicsImputed <- lapply(eics, function(x) {
-        do.call(cbind, lapply(1:ncol(x), function(col) {
+        do.call(cbind, lapply(seq_len(ncol(x)), function(col) {
                            bool <- x[,col] > 1e-6
                            if (sum(bool) < 2)
                                return(x[,col])
@@ -271,7 +248,7 @@ densityEstimation <- function(object, dgridstep = dgridstep, dbandwidth = dbandw
         ng <- maxbws*bw/gridstep
         ## Sort by M/Z grid location than scan grid location
         setkey(bgcorrDT, gmz, gscan)
-        tabgmz <- table(factor(bgcorrDT[,gmz], levels = 1:length(gridseqMz)))
+        tabgmz <- table(factor(bgcorrDT[,gmz], levels = seq_along(gridseqMz)))
         if(verbose) {
             message("[getDensityEstimateApprox] Getting sparse matrix entries (M/Z)")
         }
@@ -281,7 +258,7 @@ densityEstimation <- function(object, dgridstep = dgridstep, dbandwidth = dbandw
             if (i==1) {
                 start <- 1
             } else {
-                start <- sum(tabgmz[1:(whg[1]-1)])+1
+                start <- sum(tabgmz[seq_len(whg[1]-1)])+1
             }
             end <- (start+sum(tabgmz[whg])-1)
             if (end < start)
@@ -411,6 +388,9 @@ bakedpi <- function(cmsRaw, dbandwidth = c(0.005, 10),
     object <- backgroundCorrection(object = cmsRaw, verbose = subverbose)
 
     if (dortalign) {
+        if(verbose) {
+            message("[bakedpi] Retention time alignment")
+        }
         object <- rtAlignment(object = object, verbose = subverbose)
     }
 

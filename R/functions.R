@@ -20,7 +20,7 @@ getEICS <- function(object, mzranges) {
     setkey(rawDT, mz, scan, sample)
     maxScan <- .maxScan(object)
     numSamples <- length(unique(rawDT[,sample]))
-    eics <- lapply(1:length(mzranges), function(i) {
+    eics <- lapply(seq_along(mzranges), function(i) {
         x <- rawDT[.(seq(start(mzranges[i]), end(mzranges[i]))), nomatch = 0]
         if (nrow(x)==0)
             return(matrix(0, nrow = maxScan, ncol = numSamples))

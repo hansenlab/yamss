@@ -1,5 +1,5 @@
 Package: yamss
-Version: 0.99.6
+Version: 0.99.7
 Title: Tools for high-throughput metabolomics
 Description: Tools to analyze and visualize high-throughput metabolomics data
     aquired using chromatography-mass spectrometry. These tools preprocess
@@ -8,6 +8,7 @@ Authors@R: c(
       person("Leslie", "Myint", role = c("cre", "aut"), email = "lmyint1@jhu.edu"),
       person(c("Kasper", "Daniel"), "Hansen", role = "aut"))
 Depends:
+    R (>= 3.3.0),
     methods,
     BiocGenerics (>= 0.15.3),
     SummarizedExperiment
@@ -15,7 +16,9 @@ Suggests:
     BiocStyle,
     knitr,
     rmarkdown,
-    mtbls2
+    digest,
+    mtbls2,
+    testthat
 Imports:
     IRanges,
     stats,
