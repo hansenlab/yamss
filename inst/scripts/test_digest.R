@@ -18,7 +18,7 @@ digests$bakedCorr <- yamss:::.digestDataTableBG(yamss:::.bgcorrDT(baked))
 
 cutoff <- densityQuantiles(baked)["99.9%"]
 sliced <- slicepi(baked, cutoff = cutoff, verbose = TRUE)
-digests$slicedRowData <- yamss:::.digestRowData(rowData(sliced))
+digests$slicedPeakBounds <- yamss:::.digestRowData(peakBounds(sliced))
 digests$slicedPeakQuants <- yamss:::.digestPeakQuants(peakQuants(sliced))
 
 save(digests, file = "digests.rda")                                                  

@@ -44,7 +44,7 @@ utils::globalVariables(c("peaknum", "mzmin", "mzmax", "weight", "bg", "gmz",
     digest::digest(content)
 }
 
-.digestRowData <- function(rowData) {
+.digestPeakBounds <- function(rowData) {
     content <- matrix("", nrow = nrow(rowData), ncol = 5)
     colnames(content) <- c("mzmin", "mzmax", "scanmin", "scanmax", "peaknum")
     content[, "mzmin"] <- sprintf("%.2f", rowData[["mzmin"]])

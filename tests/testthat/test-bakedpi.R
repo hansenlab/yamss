@@ -25,6 +25,6 @@ test_that("bakedpi", {
 cutoff <- densityQuantiles(baked)["99.9%"]
 sliced <- slicepi(baked, cutoff = cutoff, verbose = TRUE)
 test_that("slicepi", {
-    expect_equal(yamss:::.digestRowData(rowData(sliced)), digests$slicedRowData)
+    expect_equal(yamss:::.digestPeakBounds(peakBounds(sliced)), digests$slicedPeakBounds)
     expect_equal(yamss:::.digestPeakQuants(peakQuants(sliced)), digests$slicedPeakQuants)
 })
