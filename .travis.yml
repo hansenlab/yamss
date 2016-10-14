@@ -15,4 +15,5 @@ addons:
     packages:
       - libfftw3-dev
       - libnetcdf-dev
+      - netcdf-bin
 
