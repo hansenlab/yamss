@@ -1,6 +1,5 @@
 language: r
-r:
-  - devel
+r: bioc-devel
 sudo: false
 bioc_required: true
 warnings_are_errors: false
