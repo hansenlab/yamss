@@ -1,0 +1,36 @@
+import(methods)
+import(BiocGenerics)
+import(S4Vectors)
+import(SummarizedExperiment)
+
+## Mass spec stuff
+
+importFrom(mzR, openMSfile)
+importMethodsFrom(mzR, peaks, header, close)
+
+## "Base" packages
+
+importFrom(Matrix, sparseMatrix)
+importMethodsFrom(Matrix, crossprod)
+importFrom(stats, approx, approxfun, dnorm, loess,
+           model.matrix, predict)
+importFrom(grDevices, colorRampPalette)
+
+## Other packages
+
+importFrom(IRanges, IRanges, whichAsIRanges)
+importMethodsFrom(IRanges, as.matrix, cor, diff, ifelse,
+                  quantile, shift)
+
+importFrom(data.table, ":=", ".N", CJ, data.table, rbindlist, setkey)
+importFrom(EBImage, bwlabel)
+importFrom(limma, eBayes, lmFit, topTable)
+
+## Export
+
+export(readMSdata, bakedpi, slicepi, CMSslice)
+export(getTIC, getEICS, diffrep, plotDensityRegion)
+export(densityEstimate, densityCutoff, densityQuantiles, 
+       peakBounds, peakQuants)
+exportClasses("CMSraw", "CMSproc", "CMSslice")
+exportMethods(show, colData)
