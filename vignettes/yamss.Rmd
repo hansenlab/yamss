@@ -1,0 +1,143 @@
+---
+title: "The yamss User's Guide"
+author: "Leslie Myint, Kasper Daniel Hansen"
+date: "`r doc_date()`"
+package: "`r pkg_ver('yamss')`"
+bibliography: yamss.bib
+abstract: >
+  A comprehensive guide to using the yamss package for analyzing
+  high-throughput metabolomics data
+vignette: >
+  %\VignetteIndexEntry{yamss User's Guide}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output: 
+  BiocStyle::pdf_document
+---
+
+# Introduction
+
+The `r Biocpkg("yamss")` (yet another mass spectrometry software) package provides tools to preprocess raw mass spectral data files arising from metabolomics experiments with the primary goal of providing high-quality differential analysis. Currently, `r Biocpkg("yamss")` implements a preprocessing method "bakedpi", which stands for bivariate approximate kernel density estimation for peak identification.
+
+Alternatives to this package include  `r Biocpkg("xcms")` [@xcms] (available on Bioconductor) and MZMine 2 [@mzmine].  These packages  also provide preprocessing functionality but focus more on feature detection and alignment in individual samples.  The input data to `r Biocpkg("yamss")` are standard metabolomics mass spectral files which can be read by `r Biocpkg("mzR")`.
+
+## bakedpi
+
+The "bakedpi" algorithm is a new preprocessing algorithm for untargeted metabolomics data (manuscript in preparation).  The output of "bakedpi" is essentially a table with dimension peaks (adducts) by samples, containing quantified intensity measurements representing the abundance of metabolites.  This table, which is very similar to output in gene expression analysis, can directly be used in standard statistical packages, such as `r Biocpkg("limma")`, to identify differentially abundant metabolites between conditions.  It is critical that all samples which are analyzed together, are processed together through bakedpi.
+
+
+## Dependencies
+
+This document has the following dependencies
+
+```{r dependencies, warning=FALSE, message=FALSE}
+library(yamss)
+library(mtbls2)
+```
+
+# Processing a metabolomics dataset
+
+We will be looking at data provided in the `mtbls2` data package. In this experiment, investigators exposed wild-type and mutant *Arabidopsis thaliana* leaves to silver nitrate and performed global LC/MS profiling. The experiment was repeated twice, but we will only be looking at the first replicate. There are 4 wild-type and 4 mutant plants in this experiment.
+
+```{r}
+filepath <- file.path(find.package("mtbls2"), "mzData")
+files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)
+classes <- rep(c("wild-type", "mutant"), each = 4)
+```
+
+The first step is to read the raw mass spec data into an R representation using `readMSdata()`:
+
+```{r}
+colData <- DataFrame(sampClasses = classes, ionmode = "pos")
+cmsRaw <- readMSdata(files = files, colData = colData, mzsubset = c(500,520), verbose = TRUE)
+cmsRaw
+```
+
+The output of `readMSdata()` is an object of class `CMSraw` representating raw (unprocessed) data.  We use the `colData` argument to store phenotype information about the different samples.
+
+The next step is to use `bakedpi()` to preprocess these samples.  This function takes a while to run, so we only run it on a small slice of M/Z values, using the `mzsubset` argument.  This is only done for speed.
+
+```{r}
+cmsProc <- bakedpi(cmsRaw, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
+                   outfileDens = NULL, dortalign = TRUE, mzsubset = c(500, 520), verbose = TRUE)
+cmsProc
+```
+
+The `dbandwidth` and `dgridstep` arguments influence the bivariate kernel density estimation which forms the core of bakedpi. `dgridstep` is a vector of length 2 that specifies the spacing of the grid upon which the density is estimated. The first component specifies the spacing in the M/Z direction, and the second component specifies the spacing in the scan (retention time) direction. To showcase a fast example, we have specified the M/Z and scan spacings to be `0.01` and `1` respectively, but we recommend keeping the defaults of `0.005` and `1` because this will more accurately define the M/Z and scan bounds of the detected peaks. `dbandwidth` is a vector of length 2 that specifies the kernel density bandwidth in the M/Z and scan directions in the first and second components respectively. Note that `dbandwidth[1]` should be greater than or equal to `dgridstep[1]` and `dbandwidth[2]` should be greater than or equal to `dgridstep[2]`. Because a binning strategy is used to speed up computation of the density estimate, this is to ensure that data points falling into the same grid location all have the same distances associated with them.
+
+For experiments with a wide range of M/Z values or several thousands of scans, the computation of the density estimate can be time-intensive. For this reason, it can be useful to save the density estimate in an external file specified by the `outfileDens` argument. If `outfileDens` is set to `NULL`, then the density estimate is not saved and must be recomputed if we wish to process the data again. Specifying the filename of the saved density estimate in `outfileDens` when rerunning `bakedpi()` skips the density estimation phase which can save a lot of time.
+
+The resulting object is an instance of class `CMSproc` which contains the bivariate kernel density estimate as well as some useful preprocessing metadata. In order to obtain peak bounds and quantifications, the last step is to run `slicepi()`, which computes a global threshold for the density, uses this threshold to call peak bounds, and quantifies the peaks. If the `cutoff` argument is supplied as a number, then `slicepi()` will use this as the density threshold. Otherwise if `cutoff` is left as the default `NULL`, a data-driven threshold will be identified.
+
+```{r}
+cmsSlice <- slicepi(cmsProc, cutoff = NULL, verbose = TRUE)
+cmsSlice
+```
+
+The output of `slicepi()` is an instance of class `CMSslice` and contains the peak bounds and quantifications as well as sample and preprocessing metadata.
+
+# Differential Analysis
+
+We can access the differential analysis report with `diffrep()`. This is a convenience function, similar to `diffreport()` from the `r Biocpkg("xcms")` package.  In our case it uses `r Biocpkg("limma")` to do differential analysis; the output of `diffrep()` is basically `topTable()` from `r Biocpkg("limma")`.
+
+```{r}
+dr <- diffrep(cmsSlice, classes = classes)
+head(dr)
+```
+
+Let's look at the peak bound information for the peaks with the strongest differential signal. We can store the IDs for the top 10 peaks with
+
+```{r}
+topPeaks <- as.numeric(rownames(dr)[1:10])
+topPeaks
+```
+
+We can access the peak bound information with `peakBounds()` and select the rows corresponding to `topPeaks`.
+
+```{r}
+bounds <- peakBounds(cmsSlice)
+idx <- match(topPeaks, bounds[,"peaknum"])
+bounds[idx,]
+```
+
+# Information contained in a CMSproc object
+
+`CMSproc` objects contain information useful in exploring your data.
+
+## Density estimate
+
+The bivariate kernel density estimate matrix can be accessed with `densityEstimate()`.
+
+```{r}
+dmat <- densityEstimate(cmsProc)
+```
+
+We can make a plot of the density estimate in a particular M/Z and scan region with `plotDensityRegion()`.
+
+```{r}
+mzrange <- c(bounds[idx[1], "mzmin"], bounds[idx[1], "mzmax"])
+scanrange <- c(bounds[idx[1], "scanmin"], bounds[idx[1], "scanmax"])
+plotDensityRegion(cmsProc, mzrange = mzrange + c(-0.5,0.5), scanrange = scanrange + c(-30,30))
+```
+
+Peaks are called by thresholding the density estimate. If we wish to investigate the impact of varying this cutoff, we can use `densityCutoff` to obtain the original cutoff and `updatePeaks()` to re-call peaks and quantify them. Quantiles of the non-zero density values are also available via `densityQuantiles()`.
+
+```{r}
+cmsSlice2 <- slicepi(cmsProc, densityCutoff(cmsSlice)*0.99)
+dqs <- densityQuantiles(cmsProc)
+head(dqs)
+cmsSlice3 <- slicepi(cmsProc, dqs["98.5%"])
+nrow(peakBounds(cmsSlice)) # Number of peaks detected - original
+nrow(peakBounds(cmsSlice2)) # Number of peaks detected - updated
+nrow(peakBounds(cmsSlice3)) # Number of peaks detected - updated
+```
+
+# Sessioninfo
+
+```{r sessionInfo, results='asis', echo=FALSE}
+toLatex(sessionInfo())
+```
+
+# References
+
+
