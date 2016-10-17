@@ -1,0 +1,17 @@
+language: r
+r: bioc-devel
+sudo: false
+bioc_required: true
+warnings_are_errors: false
+# Used for code coverage testing with covr and codecov
+r_github_packages:
+  - jimhester/covr
+after_success:
+  - Rscript -e 'covr::codecov()'
+addons:
+  apt:
+    packages:
+      - libfftw3-dev
+      - libnetcdf-dev
+      - netcdf-bin
+
