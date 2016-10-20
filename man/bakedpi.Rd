@@ -45,15 +45,25 @@ kernel density estimation. The output of this function is used by
 \code{slicepi} to detect peaks and provide peak quantifications.
 }
 \examples{
+## A very small dataset
+data(cmsRawExample)
+cmsProc1 <- bakedpi(cmsRawExample,
+                    dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
+                    dortalign = TRUE, mzsubset = c(500,510))
+
+## A longer example which takes a few minutes to run.
+## This is still a smaller mz-slice of the full data.
 \dontrun{
 if (require(mtbls2)) {
+
 data(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")
 files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)
 colData <- DataFrame(sampClasses = rep(c("wild-type", "mutant"), each = 4))
 cmsRaw <- readMSdata(files = files, colData = colData, verbose = TRUE)
-cmsProc <- bakedpi(cmsRaw, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
+cmsProc2 <- bakedpi(cmsRaw, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
                    outfileDens = NULL, dortalign = TRUE, mzsubset = c(500, 520))
+
 }
 }
 }

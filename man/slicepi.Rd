@@ -28,11 +28,10 @@ been computed, the extracted ion chromatograms for the peaks are computed, and
 the EICs are integrated to obtain peak quantifications.
 }
 \examples{
-densmat <- matrix(rnorm(600), nrow = 20, ncol = 30)
-colnames(densmat) <- 1:ncol(densmat)
-rownames(densmat) <- seq(350, by = 0.005, length.out = nrow(densmat))
-densityQuantiles <- quantile(densmat, seq(from = 0, to = 1, by = 0.001))
-cmsobj <- new("CMSproc", density = densmat, densityQuantiles = densityQuantiles)
-## FIXME: next line doesnt work
-## cmsSlice <- slicepi(cmsobj, cutoff = densityQuantiles[999])
+data(cmsRawExample)
+cmsProc <- bakedpi(cmsRawExample, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
+                   outfileDens = NULL, dortalign = FALSE, verbose = TRUE)
+dqs <- densityQuantiles(cmsProc)
+cmsSlice <- slicepi(cmsProc, cutoff = dqs[996], verbose = TRUE)
+cmsSlice
 }

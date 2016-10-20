@@ -1,0 +1,122 @@
+
+R version 3.3.1 Patched (2016-08-19 r71122) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin15.6.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ## Creating test digest objects
+> library(yamss)
+Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, cbind, colnames, do.call,
+    duplicated, eval, evalq, Filter, Find, get, grep, grepl, intersect,
+    is.unsorted, lapply, lengths, Map, mapply, match, mget, order,
+    paste, pmax, pmax.int, pmin, pmin.int, Position, rank, rbind,
+    Reduce, rownames, sapply, setdiff, sort, table, tapply, union,
+    unique, unsplit, which, which.max, which.min
+
+Loading required package: SummarizedExperiment
+Loading required package: GenomicRanges
+Loading required package: stats4
+Loading required package: S4Vectors
+
+Attaching package: ‘S4Vectors’
+
+The following objects are masked from ‘package:base’:
+
+    colMeans, colSums, expand.grid, rowMeans, rowSums
+
+Loading required package: IRanges
+Loading required package: GenomeInfoDb
+Loading required package: Biobase
+Welcome to Bioconductor
+
+    Vignettes contain introductory material; view with
+    'browseVignettes()'. To cite Bioconductor, see
+    'citation("Biobase")', and for packages 'citation("pkgname")'.
+
+> data(cmsRawExample)
+> digests <- list()
+> 
+> background <- yamss:::backgroundCorrection(cmsRawExample)
+> digests$backgroundRaw <- yamss:::.digestDataTableRaw(yamss:::.rawDT(background))
+> digests$backgroundCorr <- yamss:::.digestDataTableBG(yamss:::.bgcorrDT(background))
+> 
+> rtAlign <- yamss:::rtAlignment(background)
+> digests$rtRaw <- yamss:::.digestDataTableRaw(yamss:::.rawDT(rtAlign))
+> digests$rtCorr <- yamss:::.digestDataTableBG(yamss:::.bgcorrDT(rtAlign))
+> 
+> baked <- bakedpi(cmsRawExample, dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
++                  dortalign = TRUE, mzsubset = c(500, 510))
+[bakedpi] Background correction
+[bakedpi] Retention time alignment
+[bakedpi] Density estimation
+> digests$bakedRaw <- yamss:::.digestDataTableRaw(yamss:::.rawDT(baked))
+> digests$bakedCorr <- yamss:::.digestDataTableBG(yamss:::.bgcorrDT(baked))
+> 
+> cutoff <- densityQuantiles(baked)["99.9%"]
+> sliced <- slicepi(baked, cutoff = cutoff, verbose = TRUE)
+[slicepi] Computing peak bounds
+[slicepi] Quantifying peaks
+> digests$slicedPeakBounds <- yamss:::.digestPeakBounds(peakBounds(sliced))
+> digests$slicedPeakQuants <- yamss:::.digestPeakQuants(peakQuants(sliced))
+> 
+> save(digests, file = "digests.rda")                                                  
+> sessionInfo()
+R version 3.3.1 Patched (2016-08-19 r71122)
+Platform: x86_64-apple-darwin15.6.0 (64-bit)
+Running under: macOS Sierra (10.12)
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+attached base packages:
+[1] stats4    parallel  stats     graphics  grDevices utils     datasets 
+[8] methods   base     
+
+other attached packages:
+[1] yamss_0.99.7                SummarizedExperiment_1.3.82
+[3] Biobase_2.33.4              GenomicRanges_1.25.94      
+[5] GenomeInfoDb_1.9.14         IRanges_2.7.17             
+[7] S4Vectors_0.11.19           BiocGenerics_0.19.2        
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_0.12.7        XVector_0.13.7     zlibbioc_1.19.0    EBImage_4.15.5    
+ [5] lattice_0.20-33    jpeg_0.1-8         tools_3.3.1        grid_3.3.1        
+ [9] data.table_1.9.6   png_0.1-7          mzR_2.7.12         ProtGenerics_1.5.1
+[13] digest_0.6.10      abind_1.4-5        Matrix_1.2-6       fftwtools_0.9-7   
+[17] codetools_0.2-14   tiff_0.1-5         limma_3.29.21      locfit_1.5-9.1    
+[21] chron_2.3-47      
+> 
+> 
+> proc.time()
+   user  system elapsed 
+ 29.716   1.003  33.330 

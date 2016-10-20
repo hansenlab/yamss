@@ -49,6 +49,9 @@ this class are created by the \code{readMSdata} function.
 }
 
 \examples{
+data(cmsRawExample)
+cmsRawExample
+
 if (require(mtbls2)) {
 data(mtbls2)
 filepath <- file.path(find.package("mtbls2"), "mzData")

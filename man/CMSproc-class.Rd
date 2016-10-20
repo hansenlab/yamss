@@ -75,9 +75,21 @@ estimate.
 }
 
 \examples{
+
+## Construct a completely fake example
 densmat <- matrix(rnorm(600), nrow = 20, ncol = 30)
 colnames(densmat) <- 1:ncol(densmat)
 rownames(densmat) <- seq(350, by = 0.005, length.out = nrow(densmat))
 cmsobj <- new("CMSproc", density = densmat)
 head(densityEstimate(cmsobj))
+
+## Takes about 20s to run
+\dontrun{
+
+data(cmsRawExample)
+cmsProc <- bakedpi(cmsRawExample,
+                    dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
+                    dortalign = TRUE, mzsubset = c(500,510))
+cmsProc
+}
 }

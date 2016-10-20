@@ -16,11 +16,11 @@ getEICS <- function(object, mzranges) {
                             end = as.integer(mzranges[,2]*1e5))
     }
     ## Sort DT and get XICs
-    rawDT <- object@rawDT
+    rawDT <- .rawDT(object)
     setkey(rawDT, mz, scan, sample)
-    maxScan <- object@mzParams$maxScan
+    maxScan <- .maxScan(object)
     numSamples <- length(unique(rawDT[,sample]))
-    eics <- lapply(1:length(mzranges), function(i) {
+    eics <- lapply(seq_along(mzranges), function(i) {
         x <- rawDT[.(seq(start(mzranges[i]), end(mzranges[i]))), nomatch = 0]
         if (nrow(x)==0)
             return(matrix(0, nrow = maxScan, ncol = numSamples))
@@ -54,14 +54,14 @@ plotDensityRegion <- function(cms, mzrange, scanrange) {
     stopifnot(is(cms, "CMSproc"))
     .isArgumentTwoVector(mzrange)
     .isArgumentTwoVector(scanrange)
-    if (nrow(cms@density)==0) {
+    if (nrow(densityEstimate(cms))==0) {
         stop("'CMS' cmsect must have a density estimate")
     }
-    mzs <- as.numeric(rownames(cms@density))
-    scans <- as.numeric(colnames(cms@density))
+    mzs <- as.numeric(rownames(densityEstimate(cms)))
+    scans <- as.numeric(colnames(densityEstimate(cms)))
     idxMZ <- which.min(abs(mzrange[1]-mzs)):which.min(abs(mzrange[2]-mzs))
     idxScan <- which.min(abs(scanrange[1]-scans)):which.min(abs(scanrange[2]-scans))
-    subdensmat <- cms@density[idxMZ, idxScan]
+    subdensmat <- densityEstimate(cms)[idxMZ, idxScan]
 
     mypalette <- colorRampPalette(c("white", "palegoldenrod",
                                     "palegreen", "#99ccff", "#ff9999", "red"))
@@ -69,6 +69,6 @@ plotDensityRegion <- function(cms, mzrange, scanrange) {
     main <- sprintf("M/Z: %f - %f. Scan: %i - %i", mzrange[1], mzrange[2],
                     scanrange[1], scanrange[2])
     image(z = t(subdensmat), x = scanrange[1]:scanrange[2], y = mzs[idxMZ],
-          col = colorsdens, breaks = cms@densityQuantiles,
+          col = colorsdens, breaks = densityQuantiles(cms),
           xlab = "Scan", ylab = "M/Z", main = main)
 }

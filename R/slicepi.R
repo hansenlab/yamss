@@ -1,19 +1,19 @@
-getCutoff <- function(object, by = 2, verbose = FALSE) {
+getCutoff <- function(object, mzSpacing = 2, verbose = FALSE) {
     if(verbose) {
         message("[getDensityCutoff] Get density cutoff")
     }
     stopifnot(is(object, "CMSproc"))
     ptime1 <- proc.time()
-    bgcorrDT <- object@bgcorrDT
-    densmat <- object@density
-    mzregions <- seq(.minMZ(object), .maxMZ(object), by = by)
+    bgcorrDT <- .bgcorrDT(object)
+    densmat <- densityEstimate(object)
+    mzregions <- seq(.minMZ(object), .maxMZ(object), by = mzSpacing)
     setkey(bgcorrDT, mz)
     densmatMzs <- as.numeric(rownames(densmat))
     densmatScans <- as.numeric(colnames(densmat))
     ## For each M/Z region, find the data point with the highest intensity
     ## Find the peak region corrresponding to this data point
     ## Get the density estimate values in this region
-    dlist <- lapply(1:(length(mzregions)-1), function(i) {
+    dlist <- lapply(seq_len(length(mzregions)-1), function(i) {
         ## Get the point with the highest intensity in this region
         mzseq <- seq(mzregions[i]*1e5, mzregions[i+1]*1e5-1)
         subdt <- bgcorrDT[.(mzseq), nomatch = 0]
@@ -46,10 +46,16 @@ getCutoff <- function(object, by = 2, verbose = FALSE) {
         names(numperscan) <- 1:.maxScan(object)
         numperscan <- numperscan[as.character(densmatScans)]
         scanIndex <- which.min(abs(densmatScans-scan))
-        left <- ifelse(sum(numperscan[scanIndex:1]==0)==0, 1, scanIndex-which.max(numperscan[scanIndex:1]==0)+1)
-        right <- ifelse(sum(numperscan[scanIndex:length(densmatScans)]==0)==0,
-                        length(densmatScans),
-                        scanIndex+which.max(numperscan[scanIndex:length(densmatScans)]==0)-1)
+        if (sum(numperscan[scanIndex:1]==0)==0) {
+            left <- 1
+        } else {
+            left <- scanIndex-which.max(numperscan[scanIndex:1]==0)+1
+        }
+        if (sum(numperscan[scanIndex:length(densmatScans)]==0)==0) {
+            right <- length(densmatScans)
+        } else {
+            right <- scanIndex+which.max(numperscan[scanIndex:length(densmatScans)]==0)-1
+        }
         return(as.numeric(densmat[densmatRows,left:right]))
     })
     ## Use features of the distribution of these density values to select a cutoff
@@ -110,7 +116,7 @@ getEICsAndQuantify <- function(object, peakBounds, verbose = FALSE) {
     rawDT <- .rawDT(object)
     setkey(rawDT, mz, scan)
     ptime1 <- proc.time()
-    eicsRaw <- lapply(1:nrow(peakBounds), function(i) {
+    eicsRaw <- lapply(seq_len(nrow(peakBounds)), function(i) {
         mzseq <- seq(as.integer(peakBounds[i,"mzmin"]*1e5), as.integer(peakBounds[i,"mzmax"]*1e5))
         dt <- rawDT[.(mzseq), nomatch = 0]
         dt <- dt[, eic := log2(max(intensity)+1), by = .(scan, sample)]
@@ -161,7 +167,7 @@ slicepi <- function(object, cutoff = NULL, verbose = TRUE) {
         if(verbose) {
             message("[slicepi] Computing cutoff")
         }
-        cutoff <- getCutoff(object = object, by = 2, verbose = subverbose)
+        cutoff <- getCutoff(object = object, mzSpacing = 2, verbose = subverbose)
         ## Get density quantiles and choose the higher of the two
         qcutoff <- which.min(abs(cutoff-densityQuantiles(object)))
         qs <- seq(0.001,0.999,0.001)
@@ -188,5 +194,5 @@ slicepi <- function(object, cutoff = NULL, verbose = TRUE) {
              rowData = DataFrame(peakBounds),
              colData = colData(object),
              metadata = metadata,
-             mzParams = object@mzParams)
+             mzParams = .mzParams(object))
 }
