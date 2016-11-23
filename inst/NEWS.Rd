@@ -2,7 +2,7 @@
 \title{yamss News}
 \encoding{UTF-8}
 
-\section{Version 1.1.1}{
+\section{Version 1.1}{
   \itemize{
     \item Chunk matrix multiplications in density estimation for faster run times.}
 }
