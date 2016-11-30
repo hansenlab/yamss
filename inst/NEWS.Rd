@@ -4,7 +4,8 @@
 
 \section{Version 1.1}{
   \itemize{
-    \item Chunk matrix multiplications in density estimation for faster run times.}
+    \item Chunk matrix multiplications in density estimation for faster run times.
+    \item Change vignette format from PDF to HTML.}
 }
 
 \section{Version 0.99}{
