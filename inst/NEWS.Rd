@@ -5,7 +5,8 @@
 \section{Version 1.1}{
   \itemize{
     \item Chunk matrix multiplications in density estimation for faster run times.
-    \item Change vignette format from PDF to HTML.}
+    \item Change vignette format from PDF to HTML.
+    \item Fix sessionInfo format in vignette and triggering of data.table warnings with nomatch.}
 }
 
 \section{Version 0.99}{
