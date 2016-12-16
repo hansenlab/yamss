@@ -4,7 +4,8 @@
 
 \section{Version 1.0}{
   \itemize{
-    \item Output of vignette changed to HTML from PDF.}
+    \item Output of vignette changed to HTML from PDF.
+    \item Fix sessionInfo format in vignette and triggering of data.table warnings with nomatch.}
 }
 
 \section{Version 0.99}{
