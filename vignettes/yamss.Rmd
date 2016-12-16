@@ -135,7 +135,7 @@ nrow(peakBounds(cmsSlice3)) # Number of peaks detected - updated
 # Sessioninfo
 
 ```{r sessionInfo, results='asis', echo=FALSE}
-toLatex(sessionInfo())
+sessionInfo()
 ```
 
 # References
