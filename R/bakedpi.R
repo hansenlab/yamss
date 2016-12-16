@@ -231,8 +231,8 @@ rtAlignment <- function(object, verbose = FALSE) {
     for (i in seq_along(irmzr)) {
         mzseq <- seq(start(irmzr[i]), end(irmzr[i]))
         for (s in .sampleNumber(object)) {
-            rawDT[CJ(mzseq,s), shift := shiftsList[[i]][s], nomatch = 0]
-            bgcorrDT[CJ(mzseq,s), shift := shiftsList[[i]][s], nomatch = 0]
+            rawDT[CJ(mzseq,s), shift := shiftsList[[i]][s]]
+            bgcorrDT[CJ(mzseq,s), shift := shiftsList[[i]][s]]
         }
     }
     rawDT[, shift := ifelse(is.na(shift), 0, shift)]
