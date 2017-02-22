@@ -1,0 +1,17 @@
+c(bibentry(bibtype = "Article",
+           key = "bakedpi",
+           title = "{Joint Bounding of Peaks across Samples Improves Differential Analysis in Mass Spectrometry-Based Metabolomics}",
+           author = c(
+               person("Leslie", "Myint"),
+               person("André", "Kleensang"),
+               person("Liang", "Zhao"),
+               person("Thomas", "Hartung"),
+               person(c("Kasper", "D."), "Hansen")
+           ),
+           year = 2017,
+           journal = "Analytical Chemistry",
+           doi = "10.1021/acs.analchem.6b04719",
+           pubmed = "28221771",
+           header = "The bakedpi method for peak detection is described in:")
+)
+
