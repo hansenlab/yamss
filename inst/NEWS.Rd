@@ -6,7 +6,7 @@
   \itemize{
     \item Output of vignette changed to HTML from PDF.
     \item Fix sessionInfo format in vignette and triggering of data.table warnings with nomatch.
-    \item Update citation}
+    \item Update citation
     \item Fix accent in citation}
 }
 
