@@ -3,7 +3,7 @@ c(bibentry(bibtype = "Article",
            title = "{Joint Bounding of Peaks across Samples Improves Differential Analysis in Mass Spectrometry-Based Metabolomics}",
            author = c(
                person("Leslie", "Myint"),
-               person("Andr\\’e", "Kleensang"),
+               person("Andr\\'e", "Kleensang"),
                person("Liang", "Zhao"),
                person("Thomas", "Hartung"),
                person(c("Kasper", "D."), "Hansen")
