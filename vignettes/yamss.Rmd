@@ -1,8 +1,10 @@
 ---
 title: "The yamss User's Guide"
-author: "Leslie Myint, Kasper Daniel Hansen"
-date: "`r doc_date()`"
-package: "`r pkg_ver('yamss')`"
+shorttitle: yamss guide
+author: 
+  - Leslie Myint
+  - Kasper Daniel Hansen
+package: yamss
 bibliography: yamss.bib
 abstract: >
   A comprehensive guide to using the yamss package for analyzing
@@ -12,7 +14,8 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 output: 
-  BiocStyle::html_document
+  BiocStyle::html_document:
+    toc_float: true
 ---
 
 # Introduction
