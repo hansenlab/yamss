@@ -26,8 +26,11 @@ Alternatives to this package include  `r Biocpkg("xcms")` [@xcms] (available on 
 
 ## bakedpi
 
-The "bakedpi" algorithm is a new preprocessing algorithm for untargeted metabolomics data (manuscript in preparation).  The output of "bakedpi" is essentially a table with dimension peaks (adducts) by samples, containing quantified intensity measurements representing the abundance of metabolites.  This table, which is very similar to output in gene expression analysis, can directly be used in standard statistical packages, such as `r Biocpkg("limma")`, to identify differentially abundant metabolites between conditions.  It is critical that all samples which are analyzed together, are processed together through bakedpi.
+The "bakedpi" algorithm is a new preprocessing algorithm for untargeted metabolomics data [@bakedpi].  The output of "bakedpi" is essentially a table with dimension peaks (adducts) by samples, containing quantified intensity measurements representing the abundance of metabolites.  This table, which is very similar to output in gene expression analysis, can directly be used in standard statistical packages, such as `r Biocpkg("limma")`, to identify differentially abundant metabolites between conditions.  It is critical that all samples which are analyzed together, are processed together through bakedpi.
 
+## Citing yamss
+
+Please cite our paper when using yamss [@bakedpi].
 
 ## Dependencies
 
@@ -37,6 +40,7 @@ This document has the following dependencies
 library(yamss)
 library(mtbls2)
 ```
+
 
 # Processing a metabolomics dataset
 
