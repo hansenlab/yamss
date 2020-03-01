@@ -11,7 +11,7 @@ getTIC <- function(object, sample) {
 getEICS <- function(object, mzranges) {
     stopifnot(is(object, "CMSraw") | is(object, "CMSproc"))
     ## Convert mzranges to an IRanges if a matrix
-    if (class(mzranges) != "IRanges") {
+    if (!is(mzranges, "IRanges")) {
         mzranges <- IRanges(start = as.integer(mzranges[,1]*1e5),
                             end = as.integer(mzranges[,2]*1e5))
     }
