@@ -1,10 +1,4 @@
 .getPeakInfo <- function(files) {
-    isCDF <- length(grep("\\.cdf", files[1], ignore.case = TRUE))==1
-    if (isCDF) {
-        backend <- "netCDF"
-    } else {
-        backend <- "Ramp"
-    }
     peakInfoAllfiles <- lapply(seq_along(files), function(i) {
         msobj <- openMSfile(files[i], backend = backend)
         peakInfo <- peaks(msobj)
@@ -12,13 +6,13 @@
         headerInfo <- header(msobj)
         whMS1 <- which(headerInfo$msLevel==1)
         peakInfo <- peakInfo[whMS1]
-                                        # Remove rows with zero intensity
+        ## Remove rows with zero intensity
         peakInfo <- lapply(peakInfo, function(spectrum) {
             keep <- spectrum[,2] > 1e-6
             return(spectrum[keep,,drop = FALSE])
         })
         close(msobj)
-                                        # Store retention time information
+        ## Store retention time information
         attr(peakInfo, "rt") <- headerInfo$retentionTime[whMS1]
         return(peakInfo)
     })
@@ -37,7 +31,7 @@
 }
     
 .subsetByMZ <- function(object, mzsubset = NULL) {
-    if(is.null(mzsubset))
+    if (is.null(mzsubset))
         return(object)
     rawDT <- .rawDT(object)
     setkey(rawDT, mz, scan)
@@ -49,7 +43,7 @@
 
 readMSdata <- function(files, colData = NULL,
                        mzsubset = NULL, verbose = FALSE) {
-    if(verbose) {
+    if (verbose) {
         message(sprintf("[readRaw]: Reading %i files", length(files)))
     }
     stopifnot(all(file.exists(files)))
@@ -76,7 +70,7 @@ readMSdata <- function(files, colData = NULL,
     .mzParams(cmsRaw) <- .setMZParams(rawDT)
     .rawDT(cmsRaw) <- rawDT
     fileData <- DataFrame(sample = as.integer(seq_along(files)), files = files)
-    if(is.null(colData)) {
+    if (is.null(colData)) {
         colData(cmsRaw) <- fileData
     } else {
         colData(cmsRaw) <- cbind(fileData, colData)
