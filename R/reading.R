@@ -1,6 +1,6 @@
 .getPeakInfo <- function(files) {
     peakInfoAllfiles <- lapply(seq_along(files), function(i) {
-        msobj <- openMSfile(files[i], backend = backend)
+        msobj <- openMSfile(files[i])
         peakInfo <- peaks(msobj)
         ## Only keep scans where the MZ level is 1 (MS versus MS-MS)
         headerInfo <- header(msobj)
