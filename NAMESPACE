@@ -19,7 +19,7 @@ importFrom(grDevices, colorRampPalette)
 ## Other packages
 
 importFrom(IRanges, IRanges, whichAsIRanges)
-importMethodsFrom(IRanges, as.matrix, cor, diff, ifelse,
+importMethodsFrom(IRanges, as.matrix, cor, diff,
                   quantile, shift)
 
 importFrom(data.table, ":=", ".N", CJ, data.table, rbindlist, setkey)
