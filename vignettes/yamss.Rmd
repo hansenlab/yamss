@@ -26,7 +26,7 @@ Alternatives to this package include  `r Biocpkg("xcms")` [@xcms] (available on 
 
 ## bakedpi
 
-The "bakedpi" algorithm is a new preprocessing algorithm for untargeted metabolomics data [@bakedpi].  The output of "bakedpi" is essentially a table with dimension peaks (adducts) by samples, containing quantified intensity measurements representing the abundance of metabolites.  This table, which is very similar to output in gene expression analysis, can directly be used in standard statistical packages, such as `r Biocpkg("limma")`, to identify differentially abundant metabolites between conditions.  It is critical that all samples which are analyzed together, are processed together through bakedpi.
+The "bakedpi" algorithm is a new preprocessing algorithm for untargeted metabolomics data [@bakedpi].  The output of "bakedpi" is essentially a table with dimension peaks (adducts) by samples, containing quantified intensity measurements representing the abundance of metabolites.  This table, which is very similar to output in gene expression analysis, can directly be used in standard statistical packages, such as `r Biocpkg("limma")`, to identify differentially abundant metabolites between conditions.  It is critical that all samples which are to be analyzed together are processed together through bakedpi.
 
 ## Citing yamss
 
@@ -47,7 +47,7 @@ library(mtbls2)
 We will be looking at data provided in the `mtbls2` data package. In this experiment, investigators exposed wild-type and mutant *Arabidopsis thaliana* leaves to silver nitrate and performed global LC/MS profiling. The experiment was repeated twice, but we will only be looking at the first replicate. There are 4 wild-type and 4 mutant plants in this experiment.
 
 ```{r}
-filepath <- file.path(find.package("mtbls2"), "mzData")
+filepath <- file.path(find.package("mtbls2"), "mzML")
 files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)
 classes <- rep(c("wild-type", "mutant"), each = 4)
 ```
