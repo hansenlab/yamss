@@ -54,7 +54,7 @@ cmsRawExample
 
 if (require(mtbls2)) {
 data(mtbls2)
-filepath <- file.path(find.package("mtbls2"), "mzData")
+filepath <- file.path(find.package("mtbls2"), "mzML")
 files <- list.files(filepath, pattern = "MSpos-Ex1", recursive = TRUE, full.names = TRUE)[1]
 colData <- DataFrame(group = "wild-type")
 cmsRaw <- readMSdata(files = files, colData = colData, verbose = TRUE)
