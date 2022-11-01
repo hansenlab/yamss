@@ -1,5 +1,5 @@
 Package: yamss
-Version: 1.24.0
+Version: 1.25.0
 Title: Tools for high-throughput metabolomics
 Description: Tools to analyze and visualize high-throughput metabolomics data
     aquired using chromatography-mass spectrometry. These tools preprocess
