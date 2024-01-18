@@ -45,7 +45,7 @@ backgroundCorrection <- function(object, verbose = FALSE) {
     r <- dnorm(bgsd)/dnorm(0)
     getBackgroundMeanAtThisMZScanSample <- function(m, rt, s) {
         dens <- densGrid[[m]][[rt]][[s]]
-        if (class(dens)=="density") {
+        if (is(dens, "density")) {
             indexFirstPeak <- which.max(diff(dens$y) < 0)
             densCutoff <- dens$y[indexFirstPeak]*r
             bgindex <- which.max(dens$y <= densCutoff & c(rep(FALSE, indexFirstPeak), rep(TRUE, length(dens$y)-indexFirstPeak)))
@@ -332,7 +332,7 @@ densityEstimation <- function(object, dgridstep = dgridstep, dbandwidth = dbandw
                 } else {
                     chunkEnd <- min(ch+scanChunkSize-1, .maxScan(object))
                 }
-                chunkSeq <- ch:chunkEnd
+                chunkSeq <- seq(from = ch, to = chunkEnd, by = 1)
                 spdensscan <- lapply(chunkSeq, function(i) {
                     whg <- max(i - ng[2], 1):min(i + ng[2], length(gridseqScan))
                     at <- dtgscan[.(whg), row, nomatch = 0]
