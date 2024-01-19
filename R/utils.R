@@ -1,6 +1,10 @@
-utils::globalVariables(c("peaknum", "mzmin", "mzmax", "weight", "bg", "gmz",
-                         "mz", "intensity", "eic", "tic", "scanmax", 
-                         "scanmin", "scanorig", "N", "."))
+utils::globalVariables(
+    c(
+        "peaknum", "mzmin", "mzmax", "weight", 
+        "bg", "gmz", "mz", "intensity", "eic", "tic", 
+        "scanmax", "scanmin", "scanorig", "N", "."
+    )
+)
 
 
 .isArgumentTwoVector <- function(vec) {
@@ -24,10 +28,9 @@ utils::globalVariables(c("peaknum", "mzmin", "mzmax", "weight", "bg", "gmz",
 }
 
 .digestDataTableBG <- function(dt) {
-    if(all(c("gmz", "gscan") %in% colnames(dt))) {
+    if (all(c("gmz", "gscan") %in% colnames(dt))) {
         content <- matrix("", nrow = nrow(dt), ncol = 6)
-        colnames(content) <- c("mz", "intensity", "scan", "sample",
-                               "gmz", "gscan")
+        colnames(content) <- c("mz", "intensity", "scan", "sample", "gmz", "gscan")
         content[, "gmz"] <- sprintf("%.3f", dt$gmz)
         content[, "gscan"] <- sprintf("%.3f", dt$gscan)
     } else {

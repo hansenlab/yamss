@@ -84,7 +84,7 @@ cmsobj <- new("CMSproc", density = densmat)
 head(densityEstimate(cmsobj))
 
 ## Takes about 20s to run
-\dontrun{
+\donttest{
 
 data(cmsRawExample)
 cmsProc <- bakedpi(cmsRawExample,

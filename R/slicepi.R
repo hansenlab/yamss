@@ -1,5 +1,5 @@
 getCutoff <- function(object, mzSpacing = 2, verbose = FALSE) {
-    if(verbose) {
+    if (verbose) {
         message("[getDensityCutoff] Get density cutoff")
     }
     stopifnot(is(object, "CMSproc"))
@@ -43,7 +43,7 @@ getCutoff <- function(object, mzSpacing = 2, verbose = FALSE) {
         subdt <- subdt[, .N, by = scan]
         numperscan <- rep(0, .maxScan(object))
         numperscan[subdt[,scan]] <- subdt[,N]
-        names(numperscan) <- 1:.maxScan(object)
+        names(numperscan) <- seq_len(.maxScan(object))
         numperscan <- numperscan[as.character(densmatScans)]
         scanIndex <- which.min(abs(densmatScans-scan))
         if (sum(numperscan[scanIndex:1]==0)==0) {
@@ -82,7 +82,7 @@ getCutoff <- function(object, mzSpacing = 2, verbose = FALSE) {
 }
 
 computePeakBounds <- function(densmat, dcutoff, verbose = FALSE) {
-    if(verbose) {
+    if (verbose) {
         message("[computePeakBounds] Computing peak bounds")
     }
     ptime1 <- proc.time()
@@ -109,7 +109,7 @@ computePeakBounds <- function(densmat, dcutoff, verbose = FALSE) {
 }
 
 getEICsAndQuantify <- function(object, peakBounds, verbose = FALSE) {
-    if(verbose) {
+    if (verbose) {
         message("[getEICsAndQuantify] compute EICs")
     }
     stopifnot(is(object, "CMSproc"))
@@ -125,7 +125,7 @@ getEICsAndQuantify <- function(object, peakBounds, verbose = FALSE) {
         eics <- lapply(.sampleNumber(object), function(s) {
             subdt <- dt[sample==s]
             if (nrow(subdt) < 2) {
-                return(approxfun(x = 1:2, y = rep(0,2), rule = 2))
+                return(approxfun(x = seq_len(2), y = rep(0,2), rule = 2))
             } else {
                 return(approxfun(x = subdt[,scan], y = subdt[,eic], rule = 2))
             }
@@ -134,7 +134,7 @@ getEICsAndQuantify <- function(object, peakBounds, verbose = FALSE) {
     })
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
-    if(verbose) {
+    if (verbose) {
         message(sprintf(".. done in %.1f secs.", stime))
         message("[getEICsAndQuantify] quantify")
     }
@@ -142,15 +142,15 @@ getEICsAndQuantify <- function(object, peakBounds, verbose = FALSE) {
     scanseq <- seq(0, .maxScan(object), scanstep)
     ptime1 <- proc.time()
     quantmat <- do.call(rbind, lapply(seq_along(eicsRaw), function(i) {
-                                   wh <- which.min(abs(scanseq-peakBounds[i,"scanmin"])):which.min(abs(scanseq-peakBounds[i,"scanmax"]))
-                                   sapply(eicsRaw[[i]], function(eic) {
-                                       f <- (2^eic(scanseq))-1
-                                       return(sum(f[wh])*scanstep)
-                                   })
-                               }))
+        wh <- which.min(abs(scanseq-peakBounds[i,"scanmin"])):which.min(abs(scanseq-peakBounds[i,"scanmax"]))
+        sapply(eicsRaw[[i]], function(eic) {
+            f <- (2^eic(scanseq))-1
+            return(sum(f[wh])*scanstep)
+        })
+    }))
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
-    if(verbose) {
+    if (verbose) {
         message(sprintf("[getEICsAndQuantify]  .. done in %.1f secs.", stime))
     }
     return(quantmat)
@@ -164,7 +164,7 @@ slicepi <- function(object, cutoff = NULL, verbose = TRUE) {
 
     ## If a cutoff is not supplied, compute it
     if (is.null(cutoff)) {
-        if(verbose) {
+        if (verbose) {
             message("[slicepi] Computing cutoff")
         }
         cutoff <- getCutoff(object = object, mzSpacing = 2, verbose = subverbose)
@@ -178,21 +178,23 @@ slicepi <- function(object, cutoff = NULL, verbose = TRUE) {
     }
     metadata[["densityQuantiles"]] <- densityQuantiles(object)
     
-    if(verbose) {
+    if (verbose) {
         message("[slicepi] Computing peak bounds")
     }
     peakBounds <- computePeakBounds(densmat = densityEstimate(object), dcutoff = metadata[["densityCutoff"]], verbose = subverbose)
 
     ## Get EICs and quantifications
-    if(verbose) {
+    if (verbose) {
         message("[slicepi] Quantifying peaks")
     }
     peakQuants <- getEICsAndQuantify(object = object, peakBounds = peakBounds, verbose = subverbose)
 
     ## Create SummarizedExperiment container
-    CMSslice(assays = SimpleList(peakQuants = peakQuants),
-             rowData = DataFrame(peakBounds),
-             colData = colData(object),
-             metadata = metadata,
-             mzParams = .mzParams(object))
+    CMSslice(
+        assays = SimpleList(peakQuants = peakQuants),
+        rowData = DataFrame(peakBounds),
+        colData = colData(object),
+        metadata = metadata,
+        mzParams = .mzParams(object)
+    )
 }

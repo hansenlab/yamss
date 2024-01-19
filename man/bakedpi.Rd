@@ -53,7 +53,7 @@ cmsProc1 <- bakedpi(cmsRawExample,
 
 ## A longer example which takes a few minutes to run.
 ## This is still a smaller mz-slice of the full data.
-\dontrun{
+\donttest{
 if (require(mtbls2)) {
 
 data(mtbls2)

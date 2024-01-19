@@ -61,13 +61,13 @@ cmsobj <- CMSslice(assays = SimpleList(peakQuants = quants),
 head(peakQuants(cmsobj))
 
 ## A better example which takes 20s to run
-\dontrun{
+\donttest{
 
 data(cmsRawExample)
 cmsProc <- bakedpi(cmsRawExample,
                    dbandwidth = c(0.01, 10), dgridstep = c(0.01, 1),
                    dortalign = TRUE, mzsubset = c(500,510))
-cutoff <- densityQuantiles(cmsProc)["99.9%"]
+cutoff <- tail(densityQuantiles(cmsProc), 2)[1]
 sliced <- slicepi(cmsProc, cutoff = cutoff, verbose = TRUE)
 sliced
 }

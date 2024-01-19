@@ -63,12 +63,18 @@ plotDensityRegion <- function(cms, mzrange, scanrange) {
     idxScan <- which.min(abs(scanrange[1]-scans)):which.min(abs(scanrange[2]-scans))
     subdensmat <- densityEstimate(cms)[idxMZ, idxScan]
 
-    mypalette <- colorRampPalette(c("white", "palegoldenrod",
-                                    "palegreen", "#99ccff", "#ff9999", "red"))
+    mypalette <- colorRampPalette(
+        c("white", "palegoldenrod","palegreen", "#99ccff", "#ff9999", "red")
+    )
     colorsdens <- c(rep("white", 890), mypalette(110))
-    main <- sprintf("M/Z: %f - %f. Scan: %i - %i", mzrange[1], mzrange[2],
-                    scanrange[1], scanrange[2])
-    image(z = t(subdensmat), x = scanrange[1]:scanrange[2], y = mzs[idxMZ],
-          col = colorsdens, breaks = densityQuantiles(cms),
-          xlab = "Scan", ylab = "M/Z", main = main)
+    main <- sprintf(
+        "M/Z: %f - %f. Scan: %i - %i",
+        mzrange[1], mzrange[2],
+        scanrange[1], scanrange[2]
+    )
+    image(
+        z = t(subdensmat), x = scanrange[1]:scanrange[2], y = mzs[idxMZ],
+        col = colorsdens, breaks = densityQuantiles(cms),
+        xlab = "Scan", ylab = "M/Z", main = main
+    )
 }

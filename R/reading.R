@@ -12,13 +12,13 @@
         headerInfo <- header(msobj)
         whMS1 <- which(headerInfo$msLevel==1)
         peakInfo <- peakInfo[whMS1]
-                                        # Remove rows with zero intensity
+        ## Remove rows with zero intensity
         peakInfo <- lapply(peakInfo, function(spectrum) {
             keep <- spectrum[,2] > 1e-6
             return(spectrum[keep,,drop = FALSE])
         })
         close(msobj)
-                                        # Store retention time information
+        ## Store retention time information
         attr(peakInfo, "rt") <- headerInfo$retentionTime[whMS1]
         return(peakInfo)
     })
@@ -32,12 +32,13 @@
         minMZraw = min(rawDT[,mz])/1e5,
         maxMZraw = max(rawDT[,mz])/1e5,
         minMZ = 10*floor(min(rawDT[,mz])/1e6),
-        maxMZ = 10*ceiling(max(rawDT[,mz])/1e6))
+        maxMZ = 10*ceiling(max(rawDT[,mz])/1e6)
+    )
     mzParams
 }
     
 .subsetByMZ <- function(object, mzsubset = NULL) {
-    if(is.null(mzsubset))
+    if (is.null(mzsubset))
         return(object)
     rawDT <- .rawDT(object)
     setkey(rawDT, mz, scan)
@@ -49,7 +50,7 @@
 
 readMSdata <- function(files, colData = NULL,
                        mzsubset = NULL, verbose = FALSE) {
-    if(verbose) {
+    if (verbose) {
         message(sprintf("[readRaw]: Reading %i files", length(files)))
     }
     stopifnot(all(file.exists(files)))
@@ -61,21 +62,24 @@ readMSdata <- function(files, colData = NULL,
     cmsRaw <- new("CMSraw")
     rawPeakInfo <- .getPeakInfo(files)
     ## Make raw data matrix and data.table
-    rawdatamat <- do.call(rbind,
-                          lapply(seq_along(rawPeakInfo), function(s) {
-                              cbind(do.call(rbind,
-                                            lapply(seq_along(rawPeakInfo[[s]]), function(scan) {
-                                                cbind(rawPeakInfo[[s]][[scan]], scan)
-                                            })), s)
-                          }))
+    rawdatamat <- do.call(rbind, lapply(seq_along(rawPeakInfo), function(s) {
+        cbind(do.call(rbind, lapply(seq_along(rawPeakInfo[[s]]), function(scan) {
+            cbind(rawPeakInfo[[s]][[scan]], scan)
+        })), s)
+    }))
     colnames(rawdatamat) <- c("mz", "intensity", "scan", "sample")
-    rawDT <- data.table(mz = as.integer(rawdatamat[,"mz"]*1e5),
-                     intensity = rawdatamat[,"intensity"],
-                     scan = as.integer(rawdatamat[,"scan"]),
-                     sample = as.integer(rawdatamat[,"sample"]))
+    rawDT <- data.table(
+        mz = as.integer(rawdatamat[,"mz"]*1e5),
+        intensity = rawdatamat[,"intensity"],
+        scan = as.integer(rawdatamat[,"scan"]),
+        sample = as.integer(rawdatamat[,"sample"])
+    )
     .mzParams(cmsRaw) <- .setMZParams(rawDT)
     .rawDT(cmsRaw) <- rawDT
-    fileData <- DataFrame(sample = as.integer(seq_along(files)), files = files)
+    fileData <- DataFrame(
+        sample = as.integer(seq_along(files)),
+        files = files
+    )
     if(is.null(colData)) {
         colData(cmsRaw) <- fileData
     } else {
