@@ -2,6 +2,13 @@
 \title{yamss News}
 \encoding{UTF-8}
 
+\section{Version 1.3}{
+  \itemize{
+    \item Updating citation information.
+    \item Changes related to moving Bioconductor from SVN to GIT.
+  }
+}
+
 \section{Version 1.1}{
   \itemize{
     \item Chunk matrix multiplications in density estimation for faster run times.
