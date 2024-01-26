@@ -1,7 +1,7 @@
 library(yamss)
 library(mtbls2)
 
-filepath <- file.path(find.package("mtbls2"), "mzData")
+filepath <- file.path(find.package("mtbls2"), "mzML")
 files <- list.files(filepath, pattern = "MSpos-Ex1.*Ag-[12]", recursive = TRUE, full.names = TRUE)
 classes <- rep(c("wild-type", "mutant"), each = 2)
 

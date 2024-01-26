@@ -3,7 +3,7 @@
     if (isCDF) {
         backend <- "netCDF"
     } else {
-        backend <- "Ramp"
+        backend <- "pwiz"
     }
     peakInfoAllfiles <- lapply(seq_along(files), function(i) {
         msobj <- openMSfile(files[i], backend = backend)
