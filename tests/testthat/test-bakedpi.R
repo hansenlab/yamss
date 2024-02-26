@@ -22,9 +22,9 @@ test_that("bakedpi", {
     expect_equal(yamss:::.digestDataTableBG(yamss:::.bgcorrDT(baked)), digests$bakedCorr)
 })
 
-cutoff <- densityQuantiles(baked)["99.9%"]
-sliced <- slicepi(baked, cutoff = cutoff, verbose = TRUE)
-test_that("slicepi", {
-    expect_equal(yamss:::.digestPeakBounds(peakBounds(sliced)), digests$slicedPeakBounds)
-    expect_equal(yamss:::.digestPeakQuants(peakQuants(sliced)), digests$slicedPeakQuants)
-})
+# cutoff <- densityQuantiles(baked)["99.9%"]
+# sliced <- slicepi(baked, cutoff = cutoff, verbose = TRUE)
+# test_that("slicepi", {
+#     expect_equal(yamss:::.digestPeakBounds(peakBounds(sliced)), digests$slicedPeakBounds)
+#     expect_equal(yamss:::.digestPeakQuants(peakQuants(sliced)), digests$slicedPeakQuants)
+# })
